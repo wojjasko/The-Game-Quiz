@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Teleturniej o Grach - Etap 3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: radial-gradient(circle at center top, #231238 0%, #12091f 55%, #08030e 100%);
+            background-attachment: fixed;
+            color: #c5a1ff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            background: linear-gradient(115deg, rgba(10, 30, 60, 0.95) 0%, rgba(12, 45, 80, 0.85) 30%, #0f172a 45%, #0f172a 55%, rgba(80, 15, 30, 0.85) 70%, rgba(60, 10, 25, 0.95) 100%);
+            padding: 18px 25px;
+            border-radius: 16px;
+            border: 2px solid rgba(69, 243, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(255, 255, 255, 0.05);
+        }
+
+        .team-container { width: 35%; display: flex; flex-direction: column; }
+        .team-row-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid rgba(255, 255, 255, 0.15); padding-bottom: 6px; }
+
+        .team-blue .team-title {
+            color: #58a6ff;
+            font-size: 28px;
+            font-weight: 900;
+            margin: 0;
+            text-transform: uppercase;
+            text-shadow: 0 0 12px rgba(88, 166, 255, 0.4);
+        }
+        .team-red .team-title {
+            color: #ff6b6b;
+            font-size: 28px;
+            font-weight: 900;
+            margin: 0;
+            text-transform: uppercase;
+            text-shadow: 0 0 12px rgba(255, 107, 107, 0.4);
+        }
+
+        .score-wrapper { position: relative; display: flex; align-items: center; gap: 10px; }
+        .score { font-size: 36px; font-weight: 900; color: #fff; }
+        .multiplier-badge { font-size: 16px; font-weight: 900; color: #39ff14; background: rgba(57, 255, 20, 0.15); border: 1px solid #39ff14; padding: 2px 8px; border-radius: 6px; }
+        .lifeline-badge { font-size: 16px; font-weight: bold; padding: 2px 8px; border-radius: 6px; border: 1px solid #ff007f; background: rgba(255, 0, 127, 0.2); color: #ff007f; }
+        .lifeline-badge.used { opacity: 0.3; filter: grayscale(1); border-color: #555; color: #aaa; }
+
+        .players-row { display: flex; gap: 15px; font-size: 15px; color: #66fcf1; list-style: none; padding: 6px 0 0 0; margin: 0; font-weight: 500; }
+        .team-blue .players-row { justify-content: flex-start; }
+        .team-red .players-row { justify-content: flex-end; }
+
+        .center-titles { width: 28%; text-align: center; align-self: center; }
+        .main-game-title { margin: 0; color: #fff; font-size: 24px; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        .sub-game-title { color: #66fcf1; font-size: 15px; margin-top: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 8px rgba(102,252,241,0.6); }
+
+        /* SIATKA KART */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 220px);
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .card-item {
+            height: 120px;
+            background: rgba(22, 27, 34, 0.85);
+            border: 2px solid #45f3ff;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 900;
+            color: #fff;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(69, 243, 255, 0.2);
+            transition: all 0.4s ease;
+            word-break: break-word;
+        }
+
+        /* ANIMACJA WYMIANY KARTY */
+        .card-item.swapping {
+            animation: cardSwap 0.8s ease-in-out forwards;
+        }
+
+        @keyframes cardSwap {
+            0% { transform: scale(1) rotateY(0deg); opacity: 1; }
+            50% { transform: scale(0.2) rotateY(90deg); opacity: 0; }
+            100% { transform: scale(1) rotateY(0deg); opacity: 1; }
+        }
+
+        /* STANY KAFELKÓW PO ODPOWIEDZIACH */
+        .card-item.status-RED-WRONG {
+            background: #18181b;
+            border: 2px dashed #ff4e00;
+            color: #777;
+            box-shadow: 0 0 10px rgba(255, 78, 0, 0.2);
+        }
+
+        .card-item.status-BLUE-WRONG {
+            background: #18181b;
+            border: 2px dashed #00d2fc;
+            color: #777;
+            box-shadow: 0 0 10px rgba(0, 210, 252, 0.2);
+        }
+
+        .card-item.status-RED-CORRECT {
+            background: linear-gradient(135deg, #d31027, #ea384d);
+            border: 2px solid #ff4e00;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255, 78, 0, 0.6);
+        }
+
+        .card-item.status-BLUE-CORRECT {
+            background: linear-gradient(135deg, #0052d4, #4364f7, #6fb1fc);
+            border: 2px solid #00d2fc;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 210, 252, 0.6);
+        }
+
+        /* MODAL PYTANIA A B C D */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(8, 3, 14, 0.92);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .question-card-box {
+            width: 850px;
+            background: rgba(22, 27, 34, 0.95);
+            border: 3px solid #66fcf1;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 0 40px rgba(102, 252, 241, 0.3);
+            text-align: center;
+        }
+
+        .question-category-tag {
+            color: #ff007f;
+            font-size: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            font-size: 26px;
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .answer-btn {
+            background: rgba(10, 20, 40, 0.8);
+            border: 2px solid #45f3ff;
+            border-radius: 12px;
+            padding: 18px 20px;
+            font-size: 20px;
+            color: #fff;
+            font-weight: 700;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .answer-letter {
+            color: #ff007f;
+            font-weight: 900;
+            font-size: 24px;
+        }
+
+        .answer-btn.hidden-answer {
+            visibility: hidden;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="team-container team-blue">
+        <div class="team-row-top">
+            <h2 id="viewDruzyna1" class="team-title">SZTYWNE GITY</h2>
+            <div class="score-wrapper">
+                <div id="lifeline1" class="lifeline-badge">50:50</div>
+                <div id="badgeMnoznik1" class="multiplier-badge">+15 pkt</div>
+                <div id="viewPunkty1" class="score">0</div>
+            </div>
+        </div>
+        <ul id="viewUczestnicy1" class="players-row"></ul>
+    </div>
+
+    <div class="center-titles">
+        <h1 class="main-game-title">TELETURNIEJ O GRACH</h1>
+        <div class="sub-game-title">Runda 3: Karty</div>
+    </div>
+
+    <div class="team-container team-red">
+        <div class="team-row-top">
+            <div class="score-wrapper">
+                <div id="viewPunkty2" class="score">0</div>
+                <div id="badgeMnoznik2" class="multiplier-badge">+15 pkt</div>
+                <div id="lifeline2" class="lifeline-badge">50:50</div>
+            </div>
+            <h2 id="viewDruzyna2" class="team-title">PATAŁACHY</h2>
+        </div>
+        <ul id="viewUczestnicy2" class="players-row"></ul>
+    </div>
+</div>
+
+<div class="cards-grid" id="cardsGrid"></div>
+
+<!-- MODAL DLA PYTANIA A B C D -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="question-card-box">
+        <div class="question-category-tag" id="modalCategory">KATEGORIA</div>
+        <div class="question-text" id="modalQuestionText">Treść pytania?</div>
+
+        <div class="answers-grid">
+            <div class="answer-btn" id="ansBoxA"><span class="answer-letter">A:</span> <span id="ansTextA"></span></div>
+            <div class="answer-btn" id="ansBoxB"><span class="answer-letter">B:</span> <span id="ansTextB"></span></div>
+            <div class="answer-btn" id="ansBoxC"><span class="answer-letter">C:</span> <span id="ansTextC"></span></div>
+            <div class="answer-btn" id="ansBoxD"><span class="answer-letter">D:</span> <span id="ansTextD"></span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let poprzednieKartyIds = [];
+
+    function renderujStan(stan) {
+        // Nagłówek i Punkty
+        document.getElementById('viewDruzyna1').innerText = stan.nazwaDruzyny1;
+        document.getElementById('viewPunkty1').innerText = stan.punktyDruzyny1;
+        document.getElementById('badgeMnoznik1').innerText = `+${stan.mnoznikDruzyny1} pkt`;
+        document.getElementById('viewUczestnicy1').innerHTML = stan.uczestniciDruzyny1.map(u => `<li>${u}</li>`).join('');
+
+        const l1 = document.getElementById('lifeline1');
+        if (stan.koloUsedDruzyna1) l1.classList.add('used');
+        else l1.classList.remove('used');
+
+        document.getElementById('viewDruzyna2').innerText = stan.nazwaDruzyny2;
+        document.getElementById('viewPunkty2').innerText = stan.punktyDruzyny2;
+        document.getElementById('badgeMnoznik2').innerText = `+${stan.mnoznikDruzyny2} pkt`;
+        document.getElementById('viewUczestnicy2').innerHTML = stan.uczestniciDruzyny2.map(u => `<li>${u}</li>`).join('');
+
+        const l2 = document.getElementById('lifeline2');
+        if (stan.koloUsedDruzyna2) l2.classList.add('used');
+        else l2.classList.remove('used');
+
+        // Siatka 10 Kart
+        const grid = document.getElementById('cardsGrid');
+
+        // Jeśli liczba kart się zmieniła lub renderujemy pierwszy raz, twórz od nowa
+        if (grid.children.length !== stan.kartyNaStole.length) {
+            grid.innerHTML = '';
+            stan.kartyNaStole.forEach((k, idx) => {
+                const card = document.createElement('div');
+                card.id = `card-slot-${idx}`;
+                grid.appendChild(card);
+            });
+        }
+
+        stan.kartyNaStole.forEach((k, idx) => {
+            const card = document.getElementById(`card-slot-${idx}`);
+
+            // Określenie statusu odpowiedzi
+            let statusClass = '';
+            if (k.stanRozstrzygniecia && k.stanRozstrzygniecia !== 'DEFAULT') {
+                statusClass = `status-${k.stanRozstrzygniecia}`;
+            } else if (k.zuzyta) {
+                statusClass = 'used';
+            }
+
+            card.className = `card-item ${statusClass}`;
+
+            // Sprawdzenie wymiany karty po ID (aby odpalić animację)
+            if (poprzednieKartyIds[idx] && poprzednieKartyIds[idx] !== k.id) {
+                card.classList.add('swapping');
+                setTimeout(() => {
+                    card.innerText = k.kategoria;
+                }, 400); // Zmiana napisu w połowie animacji
+                setTimeout(() => {
+                    card.classList.remove('swapping');
+                }, 800);
+            } else {
+                card.innerText = k.kategoria;
+            }
+        });
+
+        // Zapamiętanie ID kart
+        poprzednieKartyIds = stan.kartyNaStole.map(k => k.id);
+
+        // Obsługa widoku pytania
+        const modal = document.getElementById('modalOverlay');
+        if (stan.pokazPytanie && stan.wybranePytanie) {
+            const q = stan.wybranePytanie;
+            document.getElementById('modalCategory').innerText = q.kategoria;
+            document.getElementById('modalQuestionText').innerText = q.trescPytania;
+
+            document.getElementById('ansTextA').innerText = q.odpA;
+            document.getElementById('ansTextB').innerText = q.odpB;
+            document.getElementById('ansTextC').innerText = q.odpC;
+            document.getElementById('ansTextD').innerText = q.odpD;
+
+            const ukryte = new Set(stan.ukryteOdpowiedzi || []);
+            document.getElementById('ansBoxA').className = `answer-btn ${ukryte.has('A') ? 'hidden-answer' : ''}`;
+            document.getElementById('ansBoxB').className = `answer-btn ${ukryte.has('B') ? 'hidden-answer' : ''}`;
+            document.getElementById('ansBoxC').className = `answer-btn ${ukryte.has('C') ? 'hidden-answer' : ''}`;
+            document.getElementById('ansBoxD').className = `answer-btn ${ukryte.has('D') ? 'hidden-answer' : ''}`;
+
+            modal.classList.add('visible');
+        } else {
+            modal.classList.remove('visible');
+        }
+    }
+
+    const socket = new SockJS('/ws-quiz');
+    const stompClient = Stomp.over(socket);
+    stompClient.debug = null;
+
+    stompClient.connect({}, function () {
+        stompClient.subscribe('/topic/etap3', function (response) {
+            renderujStan(JSON.parse(response.body));
+        });
+        fetch('/api/etap3/stan').then(res => res.json()).then(data => renderujStan(data));
+    });
+
+    document.addEventListener('contextmenu', event => event.preventDefault());
+</script>
+</body>
+</html>

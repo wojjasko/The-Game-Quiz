@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Admina - Etap 2</title>
+    <style>
+        body { font-family: sans-serif; background: #111; color: #fff; padding: 20px; }
+        .section { background: #222; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+
+        button { padding: 10px 15px; font-weight: bold; cursor: pointer; margin: 5px; background: #45f3ff; border: none; border-radius: 4px; color: #000; }
+
+        /* Style kolorów dla przycisków pytań 1-8 */
+        .btn-status-DEFAULT { background: #ffffff !important; color: #000 !important; }
+        .btn-status-BLUE { background: #007bff !important; color: #fff !important; }
+        .btn-status-RED { background: #dc3545 !important; color: #fff !important; }
+        .btn-status-NONE { background: #555555 !important; color: #aaa !important; }
+
+        /* Aktywne pytanie (wybrane przez admina) */
+        button.active-question {
+            outline: 3px solid #ff007f;
+            transform: scale(1.05);
+            box-shadow: 0 0 10px #ff007f;
+        }
+
+        .grid-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .card-control { border: 1px solid #444; padding: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .color-control-btns button { padding: 8px 12px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<h1>PANEL ADMINA - ETAP 2</h1>
+
+<div class="section">
+    <h3>1. Wybór Pytania</h3>
+    <div class="grid-buttons" id="pytaniaBtn"></div>
+</div>
+
+<div class="section">
+    <h3>2. Status Pytania <span id="lblPytanieStan">1</span></h3>
+    <p>Ustaw kto odpowiedział na to pytanie:</p>
+    <div class="color-control-btns">
+        <button onclick="ustawStanPytania('DEFAULT')" style="background: #ffffff; color: #000;">W trakcie (Biały)</button>
+        <button onclick="ustawStanPytania('BLUE')" style="background: #007bff; color: #fff;">Niebiescy</button>
+        <button onclick="ustawStanPytania('RED')" style="background: #dc3545; color: #fff;">Czerwoni</button>
+        <button onclick="ustawStanPytania('NONE')" style="background: #555555; color: #fff;">Nikt (Szary)</button>
+    </div>
+</div>
+
+<div class="section">
+    <h3>3. Sterowanie Obrazkami dla pytania <span id="lblPytanie">1</span></h3>
+    <div id="obrazkiControl"></div>
+</div>
+
+<!-- Sekcja Punktacji -->
+<div style="display: flex; gap: 20px; margin-bottom: 20px;">
+    <!-- DRUŻYNA 1 -->
+    <div style="border: 2px solid #007bff; padding: 15px; border-radius: 8px; flex: 1; background: #1a1a1a;">
+        <h3 id="nazwaDruzyny1">Drużyna 1</h3>
+        <p style="font-size: 24px; font-weight: bold;">Punkty: <span id="punktyDruzyny1">0</span></p>
+
+        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+            <button onclick="zmienPunkty(1, 15)">+15</button>
+            <button onclick="zmienPunkty(1, 10)">+10</button>
+            <button onclick="zmienPunkty(1, 5)">+5</button>
+            <button onclick="ustawPunktyZero(1)">0</button>
+            <button onclick="zmienPunkty(1, -5)">-5</button>
+        </div>
+    </div>
+
+    <!-- DRUŻYNA 2 -->
+    <div style="border: 2px solid #dc3545; padding: 15px; border-radius: 8px; flex: 1; background: #1a1a1a;">
+        <h3 id="nazwaDruzyny2">Drużyna 2</h3>
+        <p style="font-size: 24px; font-weight: bold;">Punkty: <span id="punktyDruzyny2">0</span></p>
+
+        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+            <button onclick="zmienPunkty(2, 15)">+15</button>
+            <button onclick="zmienPunkty(2, 10)">+10</button>
+            <button onclick="zmienPunkty(2, 5)">+5</button>
+            <button onclick="ustawPunktyZero(2)">0</button>
+            <button onclick="zmienPunkty(2, -5)">-5</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let aktualnyStan = null;
+
+    function pobierzStan() {
+        fetch('/api/etap2/stan')
+            .then(r => r.json())
+            .then(stan => aktualizujWidok(stan))
+            .catch(err => console.error("Błąd pobierania stanu:", err));
+    }
+
+    function aktualizujWidok(stan) {
+        if (!stan) return;
+        aktualnyStan = stan;
+
+        // 1. Nazwy drużyn i punkty
+        document.getElementById('nazwaDruzyny1').innerText = stan.nazwaDruzyny1 || "Drużyna 1";
+        document.getElementById('punktyDruzyny1').innerText = stan.punktyDruzyny1;
+        document.getElementById('nazwaDruzyny2').innerText = stan.nazwaDruzyny2 || "Drużyna 2";
+        document.getElementById('punktyDruzyny2').innerText = stan.punktyDruzyny2;
+
+        document.getElementById('lblPytanie').innerText = stan.wybranePytanie;
+        document.getElementById('lblPytanieStan').innerText = stan.wybranePytanie;
+
+        // 2. Przycisk wyboru pytań (1-8) z nakładanymi stanami kolorów
+        const pBtn = document.getElementById('pytaniaBtn');
+        pBtn.innerHTML = '';
+        for (let i = 1; i <= 8; i++) {
+            const pyt = stan.pytania[i - 1];
+            const b = document.createElement('button');
+            b.innerText = `Pytanie ${i}`;
+
+            // Nakładanie klasy koloru oraz aktywnego wyboru
+            b.className = `btn-status-${pyt.stanWlasnosci || 'DEFAULT'}`;
+            if (stan.wybranePytanie === i) {
+                b.classList.add('active-question');
+            }
+
+            b.onclick = () => {
+                fetch(`/api/etap2/pytanie/${i}`, { method: 'POST' }).then(pobierzStan);
+            };
+            pBtn.appendChild(b);
+        }
+
+        // 3. Sterowanie obrazkami dla wybranego pytania
+        const oCtrl = document.getElementById('obrazkiControl');
+        oCtrl.innerHTML = '';
+        const p = stan.pytania[stan.wybranePytanie - 1];
+
+        p.obrazki.forEach((img, idx) => {
+            const isCentered = stan.aktywnyObrazekId === img.id;
+
+            const div = document.createElement('div');
+            div.className = 'card-control';
+            div.innerHTML = `
+                <span>Obrazek ${idx + 1} ${img.odsloniety ? '<b style="color:#28a745">(ODSŁONIĘTY)</b>' : '<span style="color:#aaa">(ZABLUROWANY)</span>'}</span>
+                <div>
+                    <button style="background:${isCentered ? '#ff007f' : '#28a745'}; color:#fff;" onclick="triggerObrazek(${idx}, ${!isCentered})">
+                        ${isCentered ? 'WYŁĄCZ (Schowaj na miejsce)' : 'WŁĄCZ (Wyśrodkuj & Odsłoń)'}
+                    </button>
+                </div>
+            `;
+            oCtrl.appendChild(div);
+        });
+    }
+
+    function ustawStanPytania(stanKoloru) {
+        if (!aktualnyStan) return;
+        fetch(`/api/etap2/pytanie/stan?nrPytania=${aktualnyStan.wybranePytanie}&stanPytania=${stanKoloru}`, { method: 'POST' })
+            .then(pobierzStan);
+    }
+
+    function triggerObrazek(index, wlacz) {
+        if (!aktualnyStan) return;
+        fetch(`/api/etap2/obrazek/trigger?nrPytania=${aktualnyStan.wybranePytanie}&indexObrazka=${index}&wlacz=${wlacz}`, { method: 'POST' })
+            .then(pobierzStan);
+    }
+
+    function zmienPunkty(druzyna, ilosc) {
+        fetch(`/api/etap2/punkty?druzyna=${druzyna}&ilosc=${ilosc}`, { method: 'POST' })
+            .then(pobierzStan)
+            .catch(err => console.error("Błąd punktacji:", err));
+    }
+
+    function ustawPunktyZero(druzyna) {
+        fetch(`/api/etap2/punkty/ustaw?druzyna=${druzyna}&punkty=0`, { method: 'POST' })
+            .then(pobierzStan)
+            .catch(err => console.error("Błąd resetu punktów:", err));
+    }
+
+    document.addEventListener("DOMContentLoaded", pobierzStan);
+    setInterval(pobierzStan, 2000);
+</script>
+</body>
+</html>
