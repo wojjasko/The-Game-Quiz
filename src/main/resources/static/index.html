@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Teleturniej o Grach</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/screen-lobby.css">
+</head>
+<body>
+<main class="landing">
+    <h1>TELETURNIEJ O GRACH</h1>
+    <div class="landing-sub">Dwie drużyny, trzy etapy, jeden prowadzący</div>
+
+    <div class="landing-cards">
+        <!-- Host: creates a new game -->
+        <form class="landing-card" id="createForm">
+            <h2>Prowadzę grę</h2>
+            <p>Utwórz nową grę i zaproś graczy kodem.</p>
+            <label for="accessCode">Kod dostępu (jeśli serwer go wymaga)</label>
+            <input type="password" id="accessCode" name="accessCode" autocomplete="off">
+            <button type="submit" class="btn btn-primary">Utwórz grę</button>
+        </form>
+
+        <!-- Player: joins an existing game -->
+        <form class="landing-card" id="joinForm">
+            <h2>Dołączam do gry</h2>
+            <p>Wpisz kod od prowadzącego i wybierz drużynę.</p>
+            <label for="gameCode">Kod gry</label>
+            <input type="text" id="gameCode" name="code" maxlength="5" required autocomplete="off" style="text-transform: uppercase">
+            <label for="playerName">Twój nick</label>
+            <input type="text" id="playerName" name="name" maxlength="24" required autocomplete="off">
+            <label for="playerTeam">Drużyna</label>
+            <select id="playerTeam" name="team"></select>
+            <button type="submit" class="btn btn-primary">Dołącz</button>
+        </form>
+    </div>
+</main>
+
+<script type="module">
+    import { startLanding } from '/js/index.js';
+    startLanding();
+</script>
+</body>
+</html>

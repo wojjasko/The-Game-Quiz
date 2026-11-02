@@ -1,0 +1,62 @@
+/* Host control panel (dark admin look; overrides the player-screen body style). */
+body.host {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #1a1e24; color: #eceff1; text-align: left; padding: 16px;
+}
+.host h2 { margin: 0 0 12px; font-size: 17px; color: #00adb5; border-bottom: 2px solid #00adb5; padding-bottom: 6px; }
+.host h3 { margin: 14px 0 8px; font-size: 14px; color: #eceff1; }
+.host .muted { color: #8b95a1; font-size: 13px; }
+
+.host-topbar {
+    display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-bottom: 16px;
+    padding: 14px 18px; border-radius: 8px; background: #252a34; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+.host-code { font-size: 28px; font-weight: 800; letter-spacing: 6px; color: #66fcf1; }
+.host-phases { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.btn-phase.current { background: #00adb5; color: #04161a; outline: 2px solid #66fcf1; }
+
+.host-grid { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.host-col { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 16px; }
+.host-col-wide { flex: 2; min-width: 480px; }
+.host .card { background: #252a34; padding: 16px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
+
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.row > input[type="text"] { flex: 1; min-width: 120px; width: auto; }
+.row-label { min-width: 70px; font-weight: 700; font-size: 13px; color: #b2bec3; }
+.host .btn { padding: 8px 12px; font-size: 13px; font-family: inherit; }
+.host input[type="text"], .host textarea, .host select { font-family: inherit; font-size: 14px; padding: 8px; }
+.host textarea { min-height: 70px; resize: vertical; }
+
+.team-card { border-left: 5px solid #555; padding-left: 12px; margin-bottom: 14px; }
+.team-card-blue { border-color: #58a6ff; }
+.team-card-red { border-color: #ff6b6b; }
+.team-score { font-size: 30px; font-weight: 800; margin: 4px 0 8px; }
+
+.tile-grid { display: grid; grid-template-columns: 60px repeat(4, minmax(0, 1fr)); gap: 6px; align-items: center; }
+.tile-grid select { width: 100%; font-size: 12px; padding: 4px; }
+.tile-grid .col-head { text-align: center; font-size: 12px; color: #00adb5; font-weight: 700; }
+
+.question-row { display: grid; grid-template-columns: 90px 2fr 1fr 1fr auto; gap: 6px; align-items: center; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #393e46; }
+.question-row .row { margin: 0; flex-wrap: nowrap; }
+
+.timer-line { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.timer-time { font-size: 18px; font-weight: 800; min-width: 62px; color: #66fcf1; }
+
+.q-btn { min-width: 60px; }
+.q-btn.status-PENDING { background: #ffffff; color: #000; }
+.q-btn.status-BLUE { background: #007bff; }
+.q-btn.status-RED { background: #dc3545; }
+.q-btn.status-NONE { background: #555; color: #bbb; }
+.q-btn.active { outline: 3px solid #ff007f; transform: scale(1.05); }
+.btn.on { outline: 2px solid #66fcf1; }
+
+.card-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; margin-bottom: 6px; border: 1px solid #444; border-radius: 6px; }
+.card-line.used { opacity: 0.45; }
+.card-line.open { border-color: #ff007f; background: #2a2030; }
+.active-question { border: 2px solid #66fcf1; border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+.correct-answer { color: #28a745; font-size: 20px; font-weight: 800; }
+
+@media (max-width: 900px) {
+    .question-row { grid-template-columns: 1fr; }
+    .host-col-wide { min-width: 0; }
+}

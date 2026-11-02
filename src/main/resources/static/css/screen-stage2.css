@@ -1,0 +1,42 @@
+/* Stage 2: "which game is this?" - numbered questions and three blurred images. */
+.stage2.stage-container { margin-top: 30px; display: flex; flex-direction: column; align-items: center; }
+.numbers-nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; flex-wrap: wrap; }
+
+.num-btn {
+    width: 55px; height: 55px; font-size: 22px; font-weight: 900; border-radius: 12px; color: #fff;
+    display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+.num-btn.status-PENDING { background: rgba(22, 27, 34, 0.9); border: 2px solid #ffffff; box-shadow: 0 0 12px rgba(255, 255, 255, 0.6); }
+.num-btn.status-NONE { background: #222225; border: 2px solid #555555; color: #777777; }
+.num-btn.status-BLUE { background: linear-gradient(135deg, #0052d4, #4364f7, #6fb1fc); border: 2px solid #00d2fc; box-shadow: 0 0 15px rgba(0, 210, 252, 0.6); }
+.num-btn.status-RED { background: linear-gradient(135deg, #d31027, #ea384d); border: 2px solid #ff4e00; box-shadow: 0 0 15px rgba(255, 78, 0, 0.6); }
+.num-btn.active { transform: scale(1.22); z-index: 5; border-width: 3px; }
+
+.gallery-container { display: flex; justify-content: center; gap: 30px; max-width: 1200px; margin: 0 auto; position: relative; flex-wrap: wrap; }
+
+.img-card {
+    width: 340px; max-width: 100%; height: 220px; background: rgba(22, 27, 34, 0.85); border: 2px solid #45f3ff;
+    border-radius: 14px; overflow: hidden; position: relative; box-shadow: 0 0 15px rgba(69, 243, 255, 0.2);
+    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.img-card img {
+    width: 100%; height: 100%; object-fit: cover; filter: blur(20px);
+    transition: filter 0.5s ease, transform 0.3s ease; pointer-events: none; -webkit-user-select: none; user-select: none;
+}
+.img-card.unblurred img, .img-card.active-center img { filter: blur(0); }
+.img-placeholder { height: 100%; display: flex; align-items: center; justify-content: center; color: #6b5a93; font-size: 14px; }
+
+.img-card.active-center {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(2.2); z-index: 1000;
+    border-color: #ff007f; box-shadow: 0 0 50px rgba(255, 0, 127, 0.9);
+}
+.backdrop {
+    position: fixed; inset: 0; background: rgba(8, 3, 14, 0.85); backdrop-filter: blur(4px);
+    opacity: 0; pointer-events: none; transition: opacity 0.4s ease; z-index: 999;
+}
+.backdrop.visible { opacity: 1; }
+
+@media (max-width: 900px) {
+    .img-card.active-center { transform: translate(-50%, -50%) scale(1.2); }
+}
