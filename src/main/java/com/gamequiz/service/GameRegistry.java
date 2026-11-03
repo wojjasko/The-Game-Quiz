@@ -2,6 +2,7 @@ package com.gamequiz.service;
 
 import com.gamequiz.config.QuizProperties;
 import com.gamequiz.domain.GameSession;
+import com.gamequiz.domain.QuestionPool;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +16,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** Holds all running games in memory, creates new ones and drops idle ones. */
+/**
+ * Holds the running game. The server hosts <b>one game at a time</b>: a new game can be created only after
+ * the previous one was closed (or dropped for being idle).
+ */
 @Service
 public class GameRegistry {
 
@@ -29,39 +34,40 @@ public class GameRegistry {
     private final Map<String, GameSession> games = new ConcurrentHashMap<>();
     private final SecureRandom random = new SecureRandom();
     private final QuizProperties properties;
-    private final CardBank cardBank;
-    private final MediaCatalog media;
+    private final QuestionBank questionBank;
 
-    public GameRegistry(QuizProperties properties, CardBank cardBank, MediaCatalog media) {
+    public GameRegistry(QuizProperties properties, QuestionBank questionBank) {
         this.properties = properties;
-        this.cardBank = cardBank;
-        this.media = media;
+        this.questionBank = questionBank;
     }
 
     /**
-     * Creates a new game.
+     * Creates the game.
      *
      * @param accessCode the code the caller knows; must match {@code quiz.access-code} when that is configured
      * @throws ForbiddenException    when the access code is wrong
-     * @throws IllegalStateException when the maximum number of games is reached
+     * @throws IllegalStateException when a game is already running or the question bank is invalid
      */
-    public GameSession create(String accessCode) {
+    public synchronized GameSession create(String accessCode) {
         String required = properties.getAccessCode();
-        if (required != null && !required.isBlank() && !constantTimeEquals(required, accessCode)) {
+        if (isConfigured(required) && !constantTimeEquals(required, accessCode)) {
             throw new ForbiddenException("Wrong access code");
         }
         evictIdle();
-        if (games.size() >= properties.getMaxGames()) {
-            throw new IllegalStateException("The server is full, try again later");
+        if (!games.isEmpty()) {
+            throw new IllegalStateException("A game is already running. Join it or close it first");
         }
-        while (true) {
-            String code = generateCode();
-            GameSession session = new GameSession(code, UUID.randomUUID().toString(),
-                    properties.getMaxPlayersPerTeam(), media.scanStage2Images(), cardBank.cards(), random);
-            if (games.putIfAbsent(code, session) == null) {
-                return session;
-            }
-        }
+        QuestionPool pool = questionBank.load();
+        String code = generateCode();
+        GameSession session = new GameSession(code, UUID.randomUUID().toString(),
+                properties.getMaxPlayersPerTeam(), pool, random);
+        games.put(code, session);
+        return session;
+    }
+
+    /** The running game, if any. */
+    public Optional<GameSession> current() {
+        return games.values().stream().findFirst();
     }
 
     public GameSession require(String code) {
@@ -72,6 +78,17 @@ public class GameRegistry {
         return session;
     }
 
+    /** Removes the game so that a new one can be created. */
+    public void close(String code) {
+        games.remove(code);
+    }
+
+    /** {@code true} only when an access code is configured and the given one matches it. */
+    public boolean isAccessCodeValid(String accessCode) {
+        String required = properties.getAccessCode();
+        return isConfigured(required) && constantTimeEquals(required, accessCode);
+    }
+
     public Collection<GameSession> all() {
         return List.copyOf(games.values());
     }
@@ -80,6 +97,10 @@ public class GameRegistry {
     public void evictIdle() {
         Instant threshold = Instant.now().minus(Duration.ofMinutes(properties.getGameIdleTimeoutMinutes()));
         games.values().removeIf(session -> session.lastActivity().isBefore(threshold));
+    }
+
+    private static boolean isConfigured(String accessCode) {
+        return accessCode != null && !accessCode.isBlank();
     }
 
     static boolean constantTimeEquals(String expected, String actual) {

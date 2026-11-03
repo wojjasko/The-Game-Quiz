@@ -1,10 +1,9 @@
 package com.gamequiz.domain.stage1;
 
-import com.gamequiz.domain.common.Names;
 import com.gamequiz.domain.common.ScoreSink;
 import com.gamequiz.domain.common.Team;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -13,8 +12,8 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Rules and state of stage 1 ("question matrix"): a 4x4 board of tiles, a question database,
- * a countdown timer and a number of steals per team.
+ * Rules and state of stage 1 ("question matrix"): a 4x4 board of tiles whose columns are categories
+ * drawn from the question bank, a countdown timer and a number of steals per team.
  * <p>
  * Not thread-safe: callers must hold the lock of the owning game session.
  */
@@ -35,27 +34,29 @@ public final class Stage1State {
 
     private final ScoreSink scores;
     private final TileStatus[][] board = new TileStatus[SIZE][SIZE];
-    private final Stage1Question[][] questions = new Stage1Question[SIZE][SIZE];
+    /** The four categories of this game, left to right. */
+    private final Stage1Column[] columns = new Stage1Column[SIZE];
     private final Set<Line> completedLines = new LinkedHashSet<>();
     private final Map<Team, CountdownTimer> timers = new EnumMap<>(Team.class);
     private final Map<Team, Integer> steals = new EnumMap<>(Team.class);
 
-    private List<String> categories = List.of("Kategoria 1", "Kategoria 2", "Kategoria 3", "Kategoria 4");
     private String currentText = IDLE_PROMPT;
     private String currentImage;
     private String currentSound;
     private boolean imageZoomed;
 
-    public Stage1State(ScoreSink scores) {
+    /** @param drawnColumns exactly {@link #SIZE} columns, left to right */
+    public Stage1State(ScoreSink scores, List<Stage1Column> drawnColumns) {
         this.scores = Objects.requireNonNull(scores);
+        if (drawnColumns == null || drawnColumns.size() != SIZE) {
+            throw new IllegalArgumentException("Exactly " + SIZE + " categories are required");
+        }
+        for (int col = 0; col < SIZE; col++) {
+            columns[col] = Objects.requireNonNull(drawnColumns.get(col), "column");
+        }
         for (Team team : Team.values()) {
             timers.put(team, new CountdownTimer(INITIAL_TIME_SECONDS));
             steals.put(team, INITIAL_STEALS);
-        }
-        for (int row = 0; row < SIZE; row++) {
-            for (int col = 0; col < SIZE; col++) {
-                questions[row][col] = Stage1Question.placeholder(row * SIZE + col + 1);
-            }
         }
         reset();
     }
@@ -103,35 +104,25 @@ public final class Stage1State {
         return true;
     }
 
-    // ---- categories and question database -------------------------------------------------------------------------
+    // ---- categories and questions ----------------------------------------------------------------------------------
 
     public List<String> categories() {
-        return categories;
+        return Arrays.stream(columns).map(Stage1Column::name).toList();
     }
 
-    /** Exactly {@link #SIZE} names; blank entries fall back to "Kategoria N". */
-    public void setCategories(List<String> names) {
-        if (names == null || names.size() != SIZE) {
-            throw new IllegalArgumentException("Exactly " + SIZE + " categories are required");
-        }
-        List<String> cleaned = new ArrayList<>();
-        for (int i = 0; i < names.size(); i++) {
-            String raw = names.get(i);
-            cleaned.add(raw == null || raw.isBlank()
-                    ? "Kategoria " + (i + 1)
-                    : Names.clean(raw, MAX_CATEGORY_LENGTH, "Category name"));
-        }
-        this.categories = List.copyOf(cleaned);
+    public List<Stage1Column> columns() {
+        return List.of(columns);
+    }
+
+    /** Puts another category into a column (used to re-draw a column before the game starts). */
+    public void replaceColumn(int col, Stage1Column column) {
+        checkCell(0, col);
+        columns[col] = Objects.requireNonNull(column, "column");
     }
 
     public Stage1Question question(int row, int col) {
         checkCell(row, col);
-        return questions[row][col];
-    }
-
-    public void setQuestion(int row, int col, Stage1Question question) {
-        checkCell(row, col);
-        questions[row][col] = Objects.requireNonNull(question, "question");
+        return columns[col].questions().get(row);
     }
 
     // ---- what is currently shown on the screen --------------------------------------------------------------------
@@ -244,7 +235,7 @@ public final class Stage1State {
 
     // ---- reset -----------------------------------------------------------------------------------------------------
 
-    /** Board, screen, timers and steals back to the initial state. Scores and the question database stay. */
+    /** Board, screen, timers and steals back to the initial state. Scores and the drawn categories stay. */
     public void reset() {
         for (TileStatus[] row : board) {
             java.util.Arrays.fill(row, TileStatus.DEFAULT);

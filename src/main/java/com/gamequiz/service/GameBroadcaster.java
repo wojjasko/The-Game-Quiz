@@ -25,4 +25,9 @@ public class GameBroadcaster {
     public void sendTimers(String gameCode, Map<Team, TimerView> timers) {
         messaging.convertAndSend("/topic/game/" + gameCode + "/timers", timers);
     }
+
+    /** Tells every client that the host closed the room. */
+    public void sendClosed(String gameCode) {
+        messaging.convertAndSend("/topic/game/" + gameCode + "/closed", Map.of("closed", true));
+    }
 }

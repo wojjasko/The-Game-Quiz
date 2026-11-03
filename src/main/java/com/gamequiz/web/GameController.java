@@ -4,14 +4,13 @@ import com.gamequiz.domain.GameSession;
 import com.gamequiz.domain.common.Team;
 import com.gamequiz.service.GameCommands;
 import com.gamequiz.service.GameRegistry;
-import com.gamequiz.service.MediaCatalog;
 import com.gamequiz.web.dto.GameDtos.CreateGameRequest;
 import com.gamequiz.web.dto.GameDtos.CreateGameResponse;
+import com.gamequiz.web.dto.GameDtos.CurrentGameResponse;
 import com.gamequiz.web.dto.GameDtos.GameSnapshot;
 import com.gamequiz.web.dto.GameDtos.HostSnapshot;
 import com.gamequiz.web.dto.GameDtos.JoinRequest;
 import com.gamequiz.web.dto.GameDtos.JoinResponse;
-import com.gamequiz.web.dto.GameDtos.MediaListing;
 import com.gamequiz.web.dto.GameDtos.NameRequest;
 import com.gamequiz.web.dto.GameDtos.PhaseRequest;
 import com.gamequiz.web.dto.GameDtos.ScoreDeltaRequest;
@@ -29,21 +28,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
+
 /** Game lifecycle, lobby, teams and scores. Host endpoints require the {@code X-Host-Token} header. */
 @RestController
 @RequestMapping("/api/games")
 public class GameController {
 
     static final String HOST_TOKEN = "X-Host-Token";
+    static final String ACCESS_CODE = "X-Access-Code";
 
     private final GameRegistry registry;
     private final GameCommands commands;
-    private final MediaCatalog media;
 
-    public GameController(GameRegistry registry, GameCommands commands, MediaCatalog media) {
+    public GameController(GameRegistry registry, GameCommands commands) {
         this.registry = registry;
         this.commands = commands;
-        this.media = media;
     }
 
     // ---- public ----------------------------------------------------------------------------------------------
@@ -53,6 +53,12 @@ public class GameController {
     public CreateGameResponse create(@RequestBody(required = false) CreateGameRequest request) {
         GameSession session = registry.create(request == null ? null : request.accessCode());
         return new CreateGameResponse(session.code(), session.hostToken());
+    }
+
+    /** The running game (the server hosts one at a time); {@code code} is {@code null} when there is none. */
+    @GetMapping("/current")
+    public CurrentGameResponse current() {
+        return new CurrentGameResponse(registry.current().map(GameSession::code).orElse(null));
     }
 
     @GetMapping("/{code}")
@@ -79,10 +85,30 @@ public class GameController {
         return commands.hostView(code, token);
     }
 
-    @GetMapping("/{code}/host/media")
-    public MediaListing mediaListing(@PathVariable String code, @RequestHeader(HOST_TOKEN) String token) {
-        commands.requireHost(code, token);
-        return new MediaListing(media.listStage1Images(), media.listSounds());
+    /** Closes the room. Needs the host token or the access code (for a host who lost the token). */
+    @DeleteMapping("/{code}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void close(@PathVariable String code,
+                      @RequestHeader(value = HOST_TOKEN, required = false) String token,
+                      @RequestHeader(value = ACCESS_CODE, required = false) String accessCode) {
+        commands.close(code, token, accessCode);
+    }
+
+    /** Starts the countdown (10 s) after which the game moves to stage 1 by itself. */
+    @PostMapping("/{code}/start")
+    public HostSnapshot start(@PathVariable String code, @RequestHeader(HOST_TOKEN) String token) {
+        return commands.host(code, token, session -> session.startCountdown(Instant.now()));
+    }
+
+    @DeleteMapping("/{code}/start")
+    public HostSnapshot cancelStart(@PathVariable String code, @RequestHeader(HOST_TOKEN) String token) {
+        return commands.host(code, token, GameSession::cancelCountdown);
+    }
+
+    /** Draws a whole new question set for all stages (lobby only). */
+    @PostMapping("/{code}/questions/redraw")
+    public HostSnapshot redraw(@PathVariable String code, @RequestHeader(HOST_TOKEN) String token) {
+        return commands.host(code, token, GameSession::redrawAll);
     }
 
     @PutMapping("/{code}/phase")

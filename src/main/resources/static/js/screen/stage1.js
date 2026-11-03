@@ -1,28 +1,29 @@
 import { h, role, ensureLayout, protectMedia } from '../core/dom.js';
 import { ROW_POINTS } from '../core/constants.js';
+import { plain } from '../core/text.js';
 
 export const LINE_HIGHLIGHT_MS = 3000;
-const WAITING_TEXT = 'Oczekiwanie na uruchomienie pytania przez prowadzącego...';
+const WAITING_TEXT = 'Oczekiwanie na uruchomienie pytania przez prowadzacego...';
 
 function build(root) {
   const img = protectMedia(h('img', { class: 'question-image', alt: '', hidden: true, dataset: { role: 'image' } }));
   const audio = h('audio', { controls: true, controlsList: 'nodownload', hidden: true, dataset: { role: 'audio' } });
   audio.addEventListener('contextmenu', (e) => e.preventDefault());
   root.append(h('div', { class: 'stage1 main-container' },
-    h('div', { class: 'board-grid', dataset: { role: 'board' } }),
-    h('div', { class: 'question-box' },
-      h('div', { class: 'question-title' }, 'AKTUALNE PYTANIE'),
-      h('div', { class: 'question-text', dataset: { role: 'question' } }),
-      h('div', { class: 'media' }, img, audio))));
+      h('div', { class: 'board-grid', dataset: { role: 'board' } }),
+      h('div', { class: 'question-box' },
+          h('div', { class: 'question-title' }, 'AKTUALNE PYTANIE'),
+          h('div', { class: 'question-text', dataset: { role: 'question' } }),
+          h('div', { class: 'media' }, img, audio))));
 }
 
 function renderBoard(grid, stage1) {
   const kids = [h('div', { class: 'board-corner' })];
-  stage1.categories.forEach((c) => kids.push(h('div', { class: 'category-item' }, c)));
+  stage1.categories.forEach((c) => kids.push(h('div', { class: 'category-item' }, plain(c))));
   stage1.board.forEach((row, r) => {
     kids.push(h('div', { class: 'point-label' }, `${ROW_POINTS[r]} >`));
     row.forEach((status, c) => kids.push(
-      h('div', { class: `cell tile-${status}`, dataset: { row: r, col: c, status } })));
+        h('div', { class: `cell tile-${status}`, dataset: { row: r, col: c, status } })));
   });
   grid.replaceChildren(...kids);
 }
@@ -69,12 +70,25 @@ function setMedia(el, url) {
   }
 }
 
+/** Replays the "question appears" animation whenever the question, image or sound on the screen changes. */
+function animateQuestionChange(root, state, stage1) {
+  const key = [stage1.question, stage1.imageUrl, stage1.soundUrl].join('|');
+  const changed = state.prevQuestionKey !== undefined && state.prevQuestionKey !== key;
+  state.prevQuestionKey = key;
+  if (!changed) return;
+  const box = root.querySelector('.question-box');
+  box.classList.remove('question-enter');
+  void box.offsetWidth; // restart the CSS animation
+  box.classList.add('question-enter');
+}
+
 /** ctx.state is the object from createScreenState(). */
 export function renderStage1(root, stage1, ctx) {
   ensureLayout(root, 'stage1', build);
   renderBoard(role(root, 'board'), stage1);
   trackLines(root, ctx.state, stage1.completedLines);
-  role(root, 'question').textContent = stage1.question || WAITING_TEXT;
+  role(root, 'question').textContent = plain(stage1.question) || WAITING_TEXT;
+  animateQuestionChange(root, ctx.state, stage1);
   const img = role(root, 'image');
   setMedia(img, stage1.imageUrl);
   img.classList.toggle('img-zoomed', !!stage1.imageZoomed);

@@ -3,8 +3,8 @@ package com.gamequiz.domain.stage3;
 import java.util.List;
 
 /**
- * An immutable multiple-choice question of stage 3. Cards are loaded once from {@code quiz-data/stage3-cards.json}
- * and shared by all games; per-game state lives in {@link TableCard}.
+ * An immutable multiple-choice question of stage 3. Cards come from {@code data/stage3-cards.json}
+ * (the question bank); per-game state lives in {@link TableCard}.
  *
  * @param answers the four answer texts in the order A, B, C, D
  */

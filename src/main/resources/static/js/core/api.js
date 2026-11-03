@@ -8,10 +8,11 @@ export class ApiError extends Error {
   }
 }
 
-export async function request(method, path, { body, token } = {}) {
+export async function request(method, path, { body, token, accessCode } = {}) {
   const headers = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (token) headers['X-Host-Token'] = token;
+  if (accessCode) headers['X-Access-Code'] = accessCode;
   let res;
   try {
     res = await globalThis.fetch(path, {
@@ -39,12 +40,17 @@ const enc = encodeURIComponent;
 
 // ---- public endpoints -------------------------------------------------------
 export const createGame = (accessCode) =>
-  request('POST', '/api/games', { body: accessCode ? { accessCode } : {} });
+    request('POST', '/api/games', { body: accessCode ? { accessCode } : {} });
+/** The running game: `{ code }`, where `code` is null when no game is running (one game at a time). */
+export const getCurrentGame = () => request('GET', '/api/games/current');
 export const getGame = (code) => request('GET', `/api/games/${enc(code)}`);
 export const joinGame = (code, name, team) =>
-  request('POST', `/api/games/${enc(code)}/players`, { body: { name, team } });
+    request('POST', `/api/games/${enc(code)}/players`, { body: { name, team } });
+/** Close the room: needs the host token or the access code. */
+export const closeGame = (code, { token, accessCode } = {}) =>
+    request('DELETE', `/api/games/${enc(code)}`, { token, accessCode });
 export const leaveGame = (code, playerId, token) =>
-  request('DELETE', `/api/games/${enc(code)}/players/${enc(playerId)}`, { token });
+    request('DELETE', `/api/games/${enc(code)}/players/${enc(playerId)}`, { token });
 
 // ---- host endpoints ---------------------------------------------------------
 export function hostApi(code, token) {
@@ -55,19 +61,20 @@ export function hostApi(code, token) {
   const call = (method, path, body) => request(method, path, { body, token });
   return {
     get: () => call('GET', `${base}/host`),
-    media: () => call('GET', `${base}/host/media`),
     setPhase: (phase) => call('PUT', `${base}/phase`, { phase }),
+    start: () => call('POST', `${base}/start`),
+    cancelStart: () => call('DELETE', `${base}/start`),
+    redrawQuestions: () => call('POST', `${base}/questions/redraw`),
+    closeRoom: () => call('DELETE', base),
     renameTeam: (team, name) => call('PUT', `${base}/teams/${team}/name`, { name }),
     addScore: (team, delta) => call('POST', `${base}/teams/${team}/score`, { delta }),
     setScore: (team, value) => call('PUT', `${base}/teams/${team}/score`, { value }),
     movePlayer: (playerId, team) => call('PUT', `${base}/players/${enc(playerId)}/team`, { team }),
     kickPlayer: (playerId) => call('DELETE', `${base}/players/${enc(playerId)}`),
     // stage 1
-    setCategories: (categories) => call('PUT', `${s1}/categories`, { categories }),
+    rerollColumn: (col) => call('POST', `${s1}/columns/${col}/reroll`),
     setTile: (row, col, status) => call('PUT', `${s1}/tiles/${row}/${col}`, { status }),
     activateTile: (row, col) => call('POST', `${s1}/tiles/${row}/${col}/activate`),
-    saveQuestion: (row, col, q) => call('PUT', `${s1}/questions/${row}/${col}`,
-      { text: q.text, image: q.image, sound: q.sound }),
     setCurrentQuestion: (text) => call('PUT', `${s1}/current-question`, { text }),
     clearCurrentQuestion: () => call('DELETE', `${s1}/current-question`),
     setImageZoom: (zoomed) => call('PUT', `${s1}/image-zoom`, { zoomed }),
@@ -77,6 +84,7 @@ export function hostApi(code, token) {
     timeBonus: (team) => call('POST', `${s1}/time-bonus/${team}`),
     resetBoard: () => call('POST', `${s1}/reset`),
     // stage 2
+    rerollQuestion: (number) => call('POST', `${s2}/questions/${number}/reroll`),
     selectQuestion: (number) => call('PUT', `${s2}/question`, { number }),
     setOutcome: (number, outcome) => call('PUT', `${s2}/questions/${number}/outcome`, { outcome }),
     focusImage: (imageIndex) => call('PUT', `${s2}/focus`, { imageIndex }),

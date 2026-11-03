@@ -5,10 +5,12 @@ import java.util.regex.Pattern;
 /** Validation and normalization of user supplied display names (players, teams, categories). */
 public final class Names {
 
-    /** Invisible formatting characters (zero-width spaces etc.) are dropped entirely. */
+    /** Invisible formatting characters (zero-width spaces, bidi overrides, ...) are dropped entirely. */
     private static final Pattern FORMAT_CHARACTERS = Pattern.compile("\\p{Cf}");
     private static final Pattern CONTROL_CHARACTERS = Pattern.compile("\\p{Cntrl}");
     private static final Pattern WHITESPACE_RUNS = Pattern.compile("\\s+");
+    /** A plain file name: no path separators, must not start with a dot (rules out "..", ".hidden"). */
+    private static final Pattern FILE_NAME = Pattern.compile("[A-Za-z0-9_][A-Za-z0-9_.\\-]{0,99}");
 
     private Names() {
     }
@@ -32,5 +34,20 @@ public final class Names {
             throw new IllegalArgumentException(label + " must have at most " + maxLength + " characters");
         }
         return cleaned;
+    }
+
+    /**
+     * Validates a media file name that will be resolved against the media directory.
+     * Blank means "no file" and is returned as an empty string.
+     *
+     * @throws IllegalArgumentException when the value contains path separators or other unsafe characters
+     */
+    public static String fileName(String value, String label) {
+        String name = value == null ? "" : value.strip();
+        if (!name.isEmpty() && !FILE_NAME.matcher(name).matches()) {
+            throw new IllegalArgumentException(
+                    label + " must be a plain file name (letters, digits, '_', '-' and '.')");
+        }
+        return name;
     }
 }

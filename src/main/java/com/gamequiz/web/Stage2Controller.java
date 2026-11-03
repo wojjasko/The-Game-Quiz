@@ -7,6 +7,7 @@ import com.gamequiz.web.dto.GameDtos.OutcomeRequest;
 import com.gamequiz.web.dto.GameDtos.QuestionNumberRequest;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -38,6 +39,13 @@ public class Stage2Controller {
                                    @RequestHeader(TOKEN) String token, @RequestBody OutcomeRequest request) {
         return commands.host(code, token,
                 s -> s.stage2().setOutcome(number, Args.required(request.outcome(), "outcome")));
+    }
+
+    /** Draws another question for one slot (lobby only). */
+    @PostMapping("/questions/{number}/reroll")
+    public HostSnapshot rerollQuestion(@PathVariable String code, @PathVariable int number,
+                                       @RequestHeader(TOKEN) String token) {
+        return commands.host(code, token, s -> s.rerollStage2Question(number));
     }
 
     @PutMapping("/focus")

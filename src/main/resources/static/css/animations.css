@@ -1,0 +1,124 @@
+/* Animations of the player screen: start countdown, stage change, question reveal, steal, team rename. */
+
+/* ---- start countdown ------------------------------------------------------------------------------------------ */
+.countdown-overlay {
+    position: fixed; inset: 0; z-index: 8000; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 24px; background: radial-gradient(circle at center, rgba(35, 18, 56, 0.96), rgba(8, 3, 14, 0.98));
+    animation: overlayIn 0.5s ease-out;
+}
+.countdown-label { font-size: 28px; font-weight: 700; letter-spacing: 8px; color: #66fcf1; text-shadow: 0 0 14px rgba(102, 252, 241, 0.6); }
+.countdown-ring {
+    position: relative; width: 340px; height: 340px; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; border: 6px solid rgba(102, 252, 241, 0.35); box-shadow: 0 0 40px rgba(102, 252, 241, 0.3), inset 0 0 40px rgba(102, 252, 241, 0.15);
+}
+.countdown-ring::after {
+    content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 6px solid #ff007f;
+    animation: ringPulse 1s ease-out infinite;
+}
+.countdown-number {
+    font-size: 190px; font-weight: 900; color: #fff; line-height: 1;
+    text-shadow: 0 0 30px rgba(255, 0, 127, 0.8), 0 0 70px rgba(102, 252, 241, 0.6);
+    animation: countdownPop 0.9s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+.countdown-number.final { color: #ffe600; text-shadow: 0 0 30px rgba(255, 230, 0, 0.9), 0 0 70px rgba(255, 90, 0, 0.7); }
+@keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes countdownPop {
+    0% { transform: scale(2.4); opacity: 0; filter: blur(12px); }
+    35% { transform: scale(0.92); opacity: 1; filter: blur(0); }
+    100% { transform: scale(1); opacity: 1; }
+}
+@keyframes ringPulse {
+    0% { transform: scale(1); opacity: 0.9; }
+    100% { transform: scale(1.35); opacity: 0; }
+}
+
+/* ---- stage change --------------------------------------------------------------------------------------------- */
+.stage-transition { position: fixed; inset: 0; z-index: 9000; pointer-events: none; overflow: hidden; }
+.stage-transition .panel {
+    position: absolute; left: 0; right: 0; height: 50%; background: linear-gradient(90deg, #12091f, #3a1466 50%, #12091f);
+    animation: panelOut 2.2s ease-in-out forwards;
+}
+.stage-transition .panel-top { top: 0; border-bottom: 3px solid #66fcf1; box-shadow: 0 6px 30px rgba(102, 252, 241, 0.5); --dir: -1; }
+.stage-transition .panel-bottom { bottom: 0; border-top: 3px solid #ff007f; box-shadow: 0 -6px 30px rgba(255, 0, 127, 0.5); --dir: 1; }
+.stage-transition .intro {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; animation: introText 2.2s ease-in-out forwards;
+}
+.stage-transition .intro-title { font-size: 96px; font-weight: 900; color: #fff; letter-spacing: 12px; text-shadow: 0 0 30px rgba(102, 252, 241, 0.8), 0 0 60px rgba(255, 0, 127, 0.6); }
+.stage-transition .intro-sub { font-size: 30px; font-weight: 700; color: #66fcf1; letter-spacing: 6px; text-transform: uppercase; }
+@keyframes panelOut {
+    0% { opacity: 0; transform: translateX(0); }
+    10% { opacity: 1; transform: translateX(0); }
+    65% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 1; transform: translateX(calc(var(--dir) * 105%)); }
+}
+@keyframes introText {
+    0% { opacity: 0; transform: scale(0.6); letter-spacing: 40px; }
+    22% { opacity: 1; transform: scale(1); letter-spacing: 0; }
+    60% { opacity: 1; transform: scale(1.04); }
+    78% { opacity: 0; transform: scale(1.3); }
+    100% { opacity: 0; }
+}
+
+/* ---- question appears on the screen (stage 1) ------------------------------------------------------------------- */
+.question-box { perspective: 900px; }
+.question-box.question-enter { animation: questionFlip 0.75s cubic-bezier(0.2, 0.9, 0.3, 1.1), questionGlow 1.6s ease-out; }
+.question-box.question-enter .question-text { animation: textRise 0.7s 0.25s both ease-out; }
+.question-box.question-enter .media { animation: mediaZoom 0.7s 0.45s both cubic-bezier(0.2, 1.2, 0.4, 1); }
+@keyframes questionFlip {
+    0% { transform: rotateX(-80deg) scale(0.85); opacity: 0; transform-origin: top center; }
+    60% { transform: rotateX(8deg) scale(1.03); opacity: 1; }
+    100% { transform: rotateX(0) scale(1); }
+}
+@keyframes questionGlow {
+    0% { box-shadow: 0 0 60px rgba(255, 0, 127, 0.9); border-color: #ff007f; }
+    100% { box-shadow: 0 0 20px rgba(102, 252, 241, 0.15); border-color: #66fcf1; }
+}
+@keyframes textRise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes mediaZoom { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
+
+/* ---- a steal is taken --------------------------------------------------------------------------------------------- */
+.steals-badge.steal-hit { animation: badgeShake 0.7s ease-in-out; }
+@keyframes badgeShake {
+    0%, 100% { transform: translateX(0); }
+    15% { transform: translateX(-8px) rotate(-6deg); color: #ff2d55; }
+    30% { transform: translateX(8px) rotate(6deg); }
+    45% { transform: translateX(-6px) rotate(-4deg); }
+    60% { transform: translateX(6px) rotate(4deg); }
+}
+.steal-fx {
+    position: absolute; top: 100%; left: 50%; z-index: 20; white-space: nowrap; pointer-events: none;
+    font-size: 30px; font-weight: 900; color: #ffc107; text-shadow: 0 0 14px #ff5a00, 0 0 30px #ff2d55;
+    animation: stealFall 1.8s ease-in forwards;
+}
+.steal-fx::before {
+    content: ''; position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px;
+    border-radius: 50%; border: 4px solid #ffc107; animation: stealRing 0.8s ease-out forwards;
+}
+@keyframes stealFall {
+    0% { opacity: 0; transform: translate(-50%, -10px) scale(0.4); }
+    15% { opacity: 1; transform: translate(-50%, 6px) scale(1.5); }
+    40% { opacity: 1; transform: translate(-50%, 10px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, 70px) scale(0.8) rotate(8deg); }
+}
+@keyframes stealRing { from { transform: scale(0.3); opacity: 1; } to { transform: scale(7); opacity: 0; } }
+
+/* ---- team renamed ------------------------------------------------------------------------------------------------- */
+.team-title { position: relative; }
+.team-title .ch { display: inline-block; white-space: pre; animation: charIn 0.55s both cubic-bezier(0.2, 1.4, 0.4, 1); animation-delay: calc(var(--i) * 40ms); }
+.team-title .ghost { position: absolute; left: 0; top: 0; white-space: nowrap; pointer-events: none; animation: ghostOut 0.9s ease-in forwards; }
+@keyframes charIn {
+    0% { opacity: 0; transform: translateY(-28px) rotateX(90deg) scale(1.6); color: #fff; text-shadow: 0 0 24px #fff; }
+    100% { opacity: 1; transform: none; }
+}
+@keyframes ghostOut {
+    0% { opacity: 0.9; transform: none; filter: blur(0); }
+    100% { opacity: 0; transform: translateY(26px) scale(0.8); filter: blur(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .countdown-overlay, .countdown-number, .countdown-ring::after, .stage-transition .panel, .stage-transition .intro,
+    .question-box.question-enter, .question-box.question-enter *, .steals-badge.steal-hit, .steal-fx, .team-title .ch, .team-title .ghost {
+        animation-duration: 0.01s !important; animation-delay: 0s !important;
+    }
+}

@@ -2,10 +2,10 @@ import { h, role, ensureLayout, protectMedia } from '../core/dom.js';
 
 function build(root) {
   root.append(h('div', { class: 'stage2 stage-container' },
-    h('div', { class: 'backdrop', dataset: { role: 'backdrop' } }),
-    h('div', { class: 'numbers-nav', dataset: { role: 'nav' } }),
-    h('div', { class: 'gallery-container', dataset: { role: 'gallery' } },
-      ...[0, 1, 2].map((i) => h('div', { class: 'img-card', dataset: { index: i } })))));
+      h('div', { class: 'backdrop', dataset: { role: 'backdrop' } }),
+      h('div', { class: 'numbers-nav', dataset: { role: 'nav' } }),
+      h('div', { class: 'gallery-container', dataset: { role: 'gallery' } },
+          ...[0, 1, 2].map((i) => h('div', { class: 'img-card', dataset: { index: i } })))));
 }
 
 function fillCard(card, image) {

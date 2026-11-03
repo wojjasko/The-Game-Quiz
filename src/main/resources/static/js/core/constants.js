@@ -13,12 +13,21 @@ export const PHASE_LABEL = {
   STAGE_3: 'Etap 3',
   FINISHED: 'Koniec',
 };
+/** Shown on the player screen (no Polish letters: the projector font lacks them). */
 export const PHASE_SUBTITLE = {
   LOBBY: 'Poczekalnia',
-  STAGE_1: 'Runda 1: Matryca Pytań',
+  STAGE_1: 'Runda 1: Matryca Pytan',
   STAGE_2: 'Runda 2: Co to za gra?',
   STAGE_3: 'Runda 3: Karty',
   FINISHED: 'Koniec gry',
+};
+/** Big title of the stage-change animation: [headline, subline]. */
+export const PHASE_INTRO = {
+  LOBBY: ['POCZEKALNIA', 'Czekamy na graczy'],
+  STAGE_1: ['ETAP 1', 'Matryca pytan'],
+  STAGE_2: ['ETAP 2', 'Co to za gra?'],
+  STAGE_3: ['ETAP 3', 'Karty'],
+  FINISHED: ['KONIEC GRY', 'Wyniki'],
 };
 export const TILE_STATUS_LABEL = {
   DEFAULT: 'Domyślny',

@@ -5,7 +5,6 @@ import com.gamequiz.domain.Player;
 import com.gamequiz.domain.common.GamePhase;
 import com.gamequiz.domain.common.Team;
 import com.gamequiz.domain.stage1.Line;
-import com.gamequiz.domain.stage1.Stage1Question;
 import com.gamequiz.domain.stage1.Stage1State;
 import com.gamequiz.domain.stage1.TileStatus;
 import com.gamequiz.domain.stage2.Stage2State;
@@ -21,6 +20,7 @@ import com.gamequiz.web.dto.GameDtos.PlayerView;
 import com.gamequiz.web.dto.GameDtos.QuestionView;
 import com.gamequiz.web.dto.GameDtos.Stage1View;
 import com.gamequiz.web.dto.GameDtos.Stage2View;
+import com.gamequiz.web.dto.GameDtos.Stage3HostCard;
 import com.gamequiz.web.dto.GameDtos.Stage3HostView;
 import com.gamequiz.web.dto.GameDtos.Stage3View;
 import com.gamequiz.web.dto.GameDtos.TeamView;
@@ -55,6 +55,7 @@ public class GameViews {
         return new GameSnapshot(
                 session.code(),
                 phase,
+                session.countdownSeconds(),
                 teams,
                 phase == GamePhase.STAGE_1 ? stage1(session.stage1()) : null,
                 phase == GamePhase.STAGE_2 ? stage2(session.stage2()) : null,
@@ -68,13 +69,11 @@ public class GameViews {
             players.add(new PlayerView(player.id(), player.name(), player.team()));
         }
 
-        List<List<Stage1Question>> questions = new ArrayList<>();
-        for (int row = 0; row < Stage1State.SIZE; row++) {
-            List<Stage1Question> rowQuestions = new ArrayList<>();
-            for (int col = 0; col < Stage1State.SIZE; col++) {
-                rowQuestions.add(session.stage1().question(row, col));
-            }
-            questions.add(rowQuestions);
+        List<Stage3HostCard> cards = new ArrayList<>();
+        for (TableCard tableCard : session.stage3().table()) {
+            QuizCard card = tableCard.card();
+            cards.add(new Stage3HostCard(card.id(), card.category(), card.question(),
+                    card.correct() + ": " + card.answerText(card.correct()), tableCard.used()));
         }
 
         Stage3HostView stage3 = null;
@@ -83,7 +82,8 @@ public class GameViews {
             QuizCard card = active.card();
             stage3 = new Stage3HostView(card.id(), card.correct(), card.answerText(card.correct()));
         }
-        return new HostSnapshot(publicSnapshot(session), players, session.stage1().categories(), questions, stage3);
+        return new HostSnapshot(publicSnapshot(session), players, session.stage1().columns(),
+                session.stage2().questions(), cards, stage3);
     }
 
     /** The two stage-1 timers, sent on their own every second while a timer runs. */
@@ -139,7 +139,7 @@ public class GameViews {
         List<ImageView> images = new ArrayList<>();
         for (int index = 0; index < Stage2State.IMAGES_PER_QUESTION; index++) {
             String file = state.imageFile(selected, index);
-            images.add(new ImageView(index, file == null ? null : media.stage2ImageUrl(file),
+            images.add(new ImageView(index, media.stage2ImageExists(file) ? media.stage2ImageUrl(file) : null,
                     state.isRevealed(selected, index)));
         }
         return new Stage2View(selected, outcomes, images, state.focusedImage());

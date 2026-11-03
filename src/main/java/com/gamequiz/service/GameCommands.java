@@ -55,11 +55,28 @@ public class GameCommands {
     /** Verifies the host token and returns the game. */
     public GameSession requireHost(String code, String hostToken) {
         GameSession session = registry.require(code);
-        if (hostToken == null || !MessageDigest.isEqual(
-                hostToken.getBytes(StandardCharsets.UTF_8), session.hostToken().getBytes(StandardCharsets.UTF_8))) {
+        if (!isHostToken(session, hostToken)) {
             throw new ForbiddenException("Missing or wrong host token");
         }
         return session;
+    }
+
+    private static boolean isHostToken(GameSession session, String hostToken) {
+        return hostToken != null && MessageDigest.isEqual(
+                hostToken.getBytes(StandardCharsets.UTF_8), session.hostToken().getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Closes the room so that a new game can be created. Allowed for the host (token) and for whoever knows the
+     * access code, so the room can still be closed when the host lost the browser that created it.
+     */
+    public void close(String code, String hostToken, String accessCode) {
+        GameSession session = registry.require(code);
+        if (!isHostToken(session, hostToken) && !registry.isAccessCodeValid(accessCode)) {
+            throw new ForbiddenException("Only the host or the holder of the access code can close the game");
+        }
+        registry.close(session.code());
+        broadcaster.sendClosed(session.code());
     }
 
     public GameSnapshot snapshot(String code) {

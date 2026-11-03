@@ -22,8 +22,8 @@ a { color: #66fcf1; }
     align-items: flex-start;
     margin-bottom: 25px;
     background: linear-gradient(115deg,
-        rgba(10, 30, 60, 0.95) 0%, rgba(12, 45, 80, 0.85) 30%, #0f172a 45%,
-        #0f172a 55%, rgba(80, 15, 30, 0.85) 70%, rgba(60, 10, 25, 0.95) 100%);
+    rgba(10, 30, 60, 0.95) 0%, rgba(12, 45, 80, 0.85) 30%, #0f172a 45%,
+    #0f172a 55%, rgba(80, 15, 30, 0.85) 70%, rgba(60, 10, 25, 0.95) 100%);
     padding: 18px 25px;
     border-radius: 16px;
     border: 2px solid rgba(69, 243, 255, 0.4);
@@ -89,7 +89,6 @@ a { color: #66fcf1; }
 .center-titles { width: 28%; text-align: center; align-self: center; }
 .main-game-title { margin: 0; color: #fff; font-size: 24px; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
 .sub-game-title { color: #66fcf1; font-size: 15px; margin-top: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 8px rgba(102, 252, 241, 0.6); }
-.game-code { margin-top: 6px; font-size: 12px; color: #9a86c8; letter-spacing: 2px; }
 
 /* ---- buttons and forms -------------------------------------------------------------------------------------- */
 .btn {

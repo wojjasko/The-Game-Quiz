@@ -3,37 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Teleturniej o Grach</title>
+    <title>GIERECZKOWO</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/base.css">
     <link rel="stylesheet" href="/css/screen-lobby.css">
 </head>
 <body>
 <main class="landing">
-    <h1>TELETURNIEJ O GRACH</h1>
-    <div class="landing-sub">Dwie drużyny, trzy etapy, jeden prowadzący</div>
+    <h1>GIERECZKOWO</h1>
+    <div class="landing-sub">Dwie druzyny, trzy etapy, jeden prowadzacy</div>
 
     <div class="landing-cards">
-        <!-- Host: creates a new game -->
+        <!-- Host: creates the game, returns to it, or closes the room -->
         <form class="landing-card" id="createForm">
-            <h2>Prowadzę grę</h2>
-            <p>Utwórz nową grę i zaproś graczy kodem.</p>
-            <label for="accessCode">Kod dostępu (jeśli serwer go wymaga)</label>
-            <input type="password" id="accessCode" name="accessCode" autocomplete="off">
-            <button type="submit" class="btn btn-primary">Utwórz grę</button>
+            <h2>Prowadze gre</h2>
+            <p id="hostHint">Utworz nowa gre i zapros graczy.</p>
+            <div id="accessBox">
+                <label for="accessCode">Kod dostepu</label>
+                <input type="password" id="accessCode" name="accessCode" autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary" id="createButton">Utworz gre</button>
+            <a class="btn btn-ok" id="hostPanelLink" href="#" hidden>Wroc do panelu prowadzacego</a>
+            <button type="button" class="btn btn-danger" id="closeButton" hidden>Zamknij pokoj</button>
         </form>
 
-        <!-- Player: joins an existing game -->
+        <!-- Player: joins the running game -->
         <form class="landing-card" id="joinForm">
-            <h2>Dołączam do gry</h2>
-            <p>Wpisz kod od prowadzącego i wybierz drużynę.</p>
-            <label for="gameCode">Kod gry</label>
-            <input type="text" id="gameCode" name="code" maxlength="5" required autocomplete="off" style="text-transform: uppercase">
-            <label for="playerName">Twój nick</label>
+            <h2>Dolaczam do gry</h2>
+            <p id="joinHint">Sprawdzam, czy gra trwa...</p>
+            <label for="playerName">Twoj nick</label>
             <input type="text" id="playerName" name="name" maxlength="24" required autocomplete="off">
-            <label for="playerTeam">Drużyna</label>
+            <label for="playerTeam">Druzyna</label>
             <select id="playerTeam" name="team"></select>
-            <button type="submit" class="btn btn-primary">Dołącz</button>
+            <button type="submit" class="btn btn-primary" id="joinButton">Dolacz</button>
+            <a class="btn btn-ok" id="screenLink" href="#" hidden>Wroc do gry</a>
         </form>
     </div>
 </main>

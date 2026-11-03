@@ -1,0 +1,12 @@
+[
+  { "answer": "DEMO 1 (obrazki p1_1, p1_2, p1_3 - podmien na swoje)", "images": ["p1_1.jpg", "p1_2.jfif", "p1_3.jpg"] },
+  { "answer": "DEMO 2 (podmien obrazki i odpowiedz w data/stage2-questions.json)", "images": ["demo2_1.png", "demo2_2.png", "demo2_3.png"] },
+  { "answer": "DEMO 3 (podmien obrazki i odpowiedz w data/stage2-questions.json)", "images": ["demo3_1.png", "demo3_2.png", "demo3_3.png"] },
+  { "answer": "DEMO 4 (podmien obrazki i odpowiedz w data/stage2-questions.json)", "images": ["demo4_1.png", "demo4_2.png", "demo4_3.png"] },
+  { "answer": "DEMO 5 (podmien obrazki i odpowiedz w data/stage2-questions.json)", "images": ["demo5_1.png", "demo5_2.png", "demo5_3.png"] },
+  { "answer": "DEMO 6 (podmien obrazki i odpowiedz w data/stage2-questions.json)", "images": ["demo6_1.png", "demo6_2.png", "demo6_3.png"] },
+  { "answer": "DEMO 7 (podmien obrazki i odpowiedz w data/stage2-questions.json)", "images": ["demo7_1.png", "demo7_2.png", "demo7_3.png"] },
+  { "answer": "DEMO 8 (podmien obrazki i odpowiedz w data/stage2-questions.json)", "images": ["demo8_1.png", "demo8_2.png", "demo8_3.png"] },
+  { "answer": "DEMO 9 (podmien obrazki i odpowiedz w data/stage2-questions.json)", "images": ["demo9_1.png", "demo9_2.png", "demo9_3.png"] },
+  { "answer": "DEMO 10 (podmien obrazki i odpowiedz w data/stage2-questions.json)", "images": ["demo10_1.png", "demo10_2.png", "demo10_3.png"] }
+]

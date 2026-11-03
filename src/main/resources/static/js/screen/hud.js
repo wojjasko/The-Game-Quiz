@@ -1,32 +1,36 @@
 import { h, role, formatTime } from '../core/dom.js';
 import { TEAMS, PHASE_SUBTITLE } from '../core/constants.js';
+import { plain } from '../core/text.js';
 
 const FLOAT_MS = 1400;
+const STEAL_FX_MS = 1800;
+const GHOST_MS = 900;
 
 /** Per-screen mutable state shared by the renderers (kept out of module scope on purpose). */
 export function createScreenState() {
-  return { prevScores: {}, lines: new Map(), prevCardIds: [] };
+  return {
+    prevScores: {}, prevSteals: {}, lines: new Map(), prevCardIds: [], prevQuestionKey: undefined, prevPhase: undefined,
+  };
 }
 
 function buildTeam(team) {
   return h('div', { class: `team-container team-${team.toLowerCase()}`, dataset: { team } },
-    h('div', { class: 'team-row-top' },
-      h('h2', { class: 'team-title', dataset: { role: 'name' } }),
-      h('div', { class: 'score-timer-wrapper' },
-        h('div', { class: 'hud-extra', dataset: { role: 'extra' } }),
-        h('div', { class: 'score-wrap', dataset: { role: 'score-wrap' } },
-          h('div', { class: 'score', dataset: { role: 'score' } }, '0')))),
-    h('ul', { class: 'players-row', dataset: { role: 'players' } }));
+      h('div', { class: 'team-row-top' },
+          h('h2', { class: 'team-title', dataset: { role: 'name' } }),
+          h('div', { class: 'score-timer-wrapper' },
+              h('div', { class: 'hud-extra', dataset: { role: 'extra' } }),
+              h('div', { class: 'score-wrap', dataset: { role: 'score-wrap' } },
+                  h('div', { class: 'score', dataset: { role: 'score' } }, '0')))),
+      h('ul', { class: 'players-row', dataset: { role: 'players' } }));
 }
 
 function buildHud(root) {
   root.append(
-    buildTeam('BLUE'),
-    h('div', { class: 'center-titles' },
-      h('h1', { class: 'main-game-title' }, 'TELETURNIEJ O GRACH'),
-      h('div', { class: 'sub-game-title', dataset: { role: 'subtitle' } }),
-      h('div', { class: 'game-code', dataset: { role: 'game-code' } })),
-    buildTeam('RED'));
+      buildTeam('BLUE'),
+      h('div', { class: 'center-titles' },
+          h('h1', { class: 'main-game-title' }, 'GIERECZKOWO'),
+          h('div', { class: 'sub-game-title', dataset: { role: 'subtitle' } })),
+      buildTeam('RED'));
 }
 
 export function showScoreFloat(wrap, diff) {
@@ -34,25 +38,46 @@ export function showScoreFloat(wrap, diff) {
   const old = wrap.querySelector('.score-float');
   if (old) old.remove();
   const el = h('div', { class: `score-float ${diff > 0 ? 'float-plus' : 'float-minus'}` },
-    `${diff > 0 ? '+' : ''}${diff}`);
+      `${diff > 0 ? '+' : ''}${diff}`);
   wrap.appendChild(el);
   globalThis.setTimeout(() => el.remove(), FLOAT_MS);
 }
 
-function renderExtra(extra, team, snap) {
+/** "-1 STEAL" burst next to the steal badge of the team that just lost a steal. */
+export function showStealLost(wrap, lost) {
+  const el = h('div', { class: 'steal-fx' }, `⚡ -${lost} STEAL`);
+  wrap.appendChild(el);
+  globalThis.setTimeout(() => el.remove(), STEAL_FX_MS);
+}
+
+/** Letter-by-letter reveal of a new team name; the old name fades away above it. */
+export function animateTeamName(title, name) {
+  const old = title.dataset.current;
+  title.dataset.current = name;
+  if (old === undefined) {
+    title.textContent = name;
+    return;
+  }
+  const ghost = h('span', { class: 'ghost' }, old);
+  title.replaceChildren(ghost, ...Array.from(name).map((ch, i) =>
+      h('span', { class: 'ch', style: `--i:${i}` }, ch)));
+  globalThis.setTimeout(() => ghost.remove(), GHOST_MS);
+}
+
+function renderExtra(extra, team, snap, stolen) {
   extra.replaceChildren();
   if (snap.phase === 'STAGE_1' && snap.stage1) {
     const s1 = snap.stage1;
     const t = (s1.timers && s1.timers[team]) || { remainingSeconds: 0, running: false };
     extra.append(
-      h('div', { class: 'steals-badge', dataset: { role: 'steals' } }, '⚡'.repeat(s1.steals?.[team] ?? 0)),
-      h('div', { class: `timer-box${t.running ? ' timer-running' : ''}`, dataset: { timer: team } },
-        formatTime(t.remainingSeconds)));
+        h('div', { class: `steals-badge${stolen ? ' steal-hit' : ''}`, dataset: { role: 'steals' } }, '⚡'.repeat(s1.steals?.[team] ?? 0)),
+        h('div', { class: `timer-box${t.running ? ' timer-running' : ''}`, dataset: { timer: team } },
+            formatTime(t.remainingSeconds)));
   } else if (snap.phase === 'STAGE_3' && snap.stage3) {
     const s3 = snap.stage3;
     extra.append(
-      h('div', { class: `lifeline-badge${s3.lifelineUsed?.[team] ? ' used' : ''}`, dataset: { role: 'lifeline' } }, '50:50'),
-      h('div', { class: 'multiplier-badge', dataset: { role: 'multiplier' } }, `+${s3.multipliers?.[team] ?? 15} pkt`));
+        h('div', { class: `lifeline-badge${s3.lifelineUsed?.[team] ? ' used' : ''}`, dataset: { role: 'lifeline' } }, '50:50'),
+        h('div', { class: 'multiplier-badge', dataset: { role: 'multiplier' } }, `+${s3.multipliers?.[team] ?? 15} pkt`));
   }
 }
 
@@ -65,16 +90,26 @@ export function renderHud(root, snap, state) {
   for (const team of TEAMS) {
     const box = root.querySelector(`.team-container[data-team="${team}"]`);
     const data = snap.teams[team];
-    role(box, 'name').textContent = data.name;
+    const title = role(box, 'name');
+    const name = plain(data.name);
+    if (title.dataset.current !== name) animateTeamName(title, name);
     role(box, 'score').textContent = String(data.score);
-    role(box, 'players').replaceChildren(...data.players.map((p) => h('li', null, p)));
+    role(box, 'players').replaceChildren(...data.players.map((p) => h('li', null, plain(p))));
     const prev = state.prevScores[team];
     if (prev !== undefined && prev !== data.score) showScoreFloat(role(box, 'score-wrap'), data.score - prev);
     state.prevScores[team] = data.score;
-    renderExtra(role(box, 'extra'), team, snap);
+
+    let stolen = false;
+    if (snap.phase === 'STAGE_1' && snap.stage1) {
+      const now = snap.stage1.steals?.[team] ?? 0;
+      const before = state.prevSteals[team];
+      stolen = before !== undefined && now < before;
+      if (stolen) showStealLost(role(box, 'score-wrap').parentElement, before - now);
+      state.prevSteals[team] = now;
+    }
+    renderExtra(role(box, 'extra'), team, snap, stolen);
   }
   role(root, 'subtitle').textContent = PHASE_SUBTITLE[snap.phase] || '';
-  role(root, 'game-code').textContent = `Kod gry: ${snap.code}`;
 }
 
 /** Update only the stage-1 timer elements (called for every /timers message). */

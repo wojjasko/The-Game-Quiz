@@ -1,29 +1,28 @@
 package com.gamequiz.domain.stage1;
 
-import java.util.regex.Pattern;
+import com.gamequiz.domain.common.Names;
 
 /**
  * One question of the stage-1 matrix. {@code image} and {@code sound} are plain file names
- * (empty string = no media) that are resolved against the media directory.
+ * (empty string = no media) that are resolved against the media directory. {@code answer} is only
+ * ever shown to the host.
  */
-public record Stage1Question(String text, String image, String sound) {
+public record Stage1Question(String text, String answer, String image, String sound) {
 
     public static final int MAX_TEXT_LENGTH = 500;
-
-    /** A plain file name: no path separators, must not start with a dot (rules out "..", ".hidden"). */
-    private static final Pattern FILE_NAME = Pattern.compile("[A-Za-z0-9_][A-Za-z0-9_.\\-]{0,99}");
+    public static final int MAX_ANSWER_LENGTH = 200;
 
     public Stage1Question {
         text = text == null ? "" : text.strip();
-        image = normalizeFileName(image, "Image");
-        sound = normalizeFileName(sound, "Sound");
+        answer = answer == null ? "" : answer.strip();
+        image = Names.fileName(image, "Image");
+        sound = Names.fileName(sound, "Sound");
         if (text.length() > MAX_TEXT_LENGTH) {
             throw new IllegalArgumentException("Question text must have at most " + MAX_TEXT_LENGTH + " characters");
         }
-    }
-
-    public static Stage1Question placeholder(int number) {
-        return new Stage1Question("Pytanie " + number, "", "");
+        if (answer.length() > MAX_ANSWER_LENGTH) {
+            throw new IllegalArgumentException("Answer must have at most " + MAX_ANSWER_LENGTH + " characters");
+        }
     }
 
     public boolean hasImage() {
@@ -32,14 +31,5 @@ public record Stage1Question(String text, String image, String sound) {
 
     public boolean hasSound() {
         return !sound.isEmpty();
-    }
-
-    private static String normalizeFileName(String value, String label) {
-        String name = value == null ? "" : value.strip();
-        if (!name.isEmpty() && !FILE_NAME.matcher(name).matches()) {
-            throw new IllegalArgumentException(
-                    label + " must be a plain file name (letters, digits, '_', '-' and '.')");
-        }
-        return name;
     }
 }

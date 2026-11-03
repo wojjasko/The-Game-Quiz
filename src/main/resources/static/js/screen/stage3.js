@@ -1,19 +1,20 @@
 import { h, role, ensureLayout } from '../core/dom.js';
 import { ANSWER_LETTERS } from '../core/constants.js';
+import { plain } from '../core/text.js';
 
 const SWAP_MS = 800;
 
 function build(root) {
   root.append(h('div', { class: 'stage3' },
-    h('div', { class: 'cards-grid', dataset: { role: 'grid' } }),
-    h('div', { class: 'modal-overlay', dataset: { role: 'modal' } },
-      h('div', { class: 'question-card-box' },
-        h('div', { class: 'question-category-tag', dataset: { role: 'category' } }),
-        h('div', { class: 'question-text', dataset: { role: 'text' } }),
-        h('div', { class: 'answers-grid' }, ...ANSWER_LETTERS.map((l) =>
-          h('div', { class: 'answer-btn', dataset: { letter: l } },
-            h('span', { class: 'answer-letter' }, `${l}:`),
-            h('span', { class: 'answer-text' }))))))));
+      h('div', { class: 'cards-grid', dataset: { role: 'grid' } }),
+      h('div', { class: 'modal-overlay', dataset: { role: 'modal' } },
+          h('div', { class: 'question-card-box' },
+              h('div', { class: 'question-category-tag', dataset: { role: 'category' } }),
+              h('div', { class: 'question-text', dataset: { role: 'text' } }),
+              h('div', { class: 'answers-grid' }, ...ANSWER_LETTERS.map((l) =>
+                  h('div', { class: 'answer-btn', dataset: { letter: l } },
+                      h('span', { class: 'answer-letter' }, `${l}:`),
+                      h('span', { class: 'answer-text' }))))))));
 }
 
 function renderCards(root, stage3, state) {
@@ -29,14 +30,14 @@ function renderCards(root, stage3, state) {
     else if (card.used) classes.push('used');
     el.className = classes.join(' ');
     el.dataset.cardId = String(card.id);
-    el.dataset.label = card.category;
+    el.dataset.label = plain(card.category);
     const prevId = state.prevCardIds[i];
     if (prevId !== undefined && prevId !== card.id) {
       el.classList.add('swapping');
       globalThis.setTimeout(() => { el.textContent = el.dataset.label; }, SWAP_MS / 2);
       globalThis.setTimeout(() => el.classList.remove('swapping'), SWAP_MS);
     } else if (!el.classList.contains('swapping')) {
-      el.textContent = card.category;
+      el.textContent = plain(card.category);
     }
   });
   state.prevCardIds = stage3.table.map((c) => c.id);
@@ -46,15 +47,15 @@ function renderQuestion(root, question) {
   const modal = role(root, 'modal');
   modal.classList.toggle('visible', !!question);
   if (!question) return;
-  role(root, 'category').textContent = question.category;
-  role(root, 'text').textContent = question.text;
+  role(root, 'category').textContent = plain(question.category);
+  role(root, 'text').textContent = plain(question.text);
   const hidden = new Set(question.hiddenAnswers || []);
   ANSWER_LETTERS.forEach((letter, i) => {
     const box = modal.querySelector(`.answer-btn[data-letter="${letter}"]`);
     const isHidden = hidden.has(letter);
     box.classList.toggle('hidden-answer', isHidden);
     box.setAttribute('aria-hidden', isHidden ? 'true' : 'false');
-    box.querySelector('.answer-text').textContent = isHidden ? '' : (question.answers[i] ?? '');
+    box.querySelector('.answer-text').textContent = isHidden ? '' : plain(question.answers[i] ?? '');
   });
 }
 

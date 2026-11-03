@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Nintendo",
+    "questions": [
+      { "text": "Jak ma na imie brat Mario?", "answer": "Luigi", "image": "mario.jpg", "sound": "" },
+      { "text": "Jak nazywa sie ksiezniczka, ktora Mario ratuje w wiekszosci gier?", "answer": "Peach", "image": "", "sound": "smb_powerup.wav" },
+      { "text": "W jakiej serii gier glownym bohaterem jest Link?", "answer": "The Legend of Zelda", "image": "", "sound": "" },
+      { "text": "W jakiej grze z 1981 roku zadebiutowal Mario (jako Jumpman)?", "answer": "Donkey Kong", "image": "", "sound": "" }
+    ]
+  },
+  {
+    "name": "Minecraft",
+    "questions": [
+      { "text": "Jak nazywa sie zielony potwor, ktory wybucha przy graczu?", "answer": "Creeper", "image": "", "sound": "" },
+      { "text": "Z jakiego surowca robi sie najlepsze narzedzia przed netherytem?", "answer": "Z diamentow", "image": "", "sound": "" },
+      { "text": "Jak nazywa sie wymiar pelen lawy, do ktorego wchodzi sie przez portal z obsydianu?", "answer": "Nether", "image": "", "sound": "" },
+      { "text": "Jak nazywa sie smok-boss z wymiaru End?", "answer": "Ender Dragon (Smok Endu)", "image": "", "sound": "" }
+    ]
+  },
+  {
+    "name": "Strzelanki",
+    "questions": [
+      { "text": "Jak nazywa sie seria strzelanek, w ktorej gramy Master Chiefem?", "answer": "Halo", "image": "", "sound": "" },
+      { "text": "W jakiej grze wystepuje slynna mapa Dust II?", "answer": "Counter-Strike", "image": "", "sound": "" },
+      { "text": "Jakie studio stworzylo serie Half-Life?", "answer": "Valve", "image": "", "sound": "" },
+      { "text": "Jak nazywa sie glowny bohater nowych odslon serii Doom?", "answer": "Doom Slayer (Doomguy)", "image": "", "sound": "" }
+    ]
+  },
+  {
+    "name": "Wiedzmin",
+    "questions": [
+      { "text": "Jak ma na imie glowny bohater Wiedzmina?", "answer": "Geralt z Rivii", "image": "", "sound": "" },
+      { "text": "Jak nazywa sie kon Geralta?", "answer": "Plotka (Roach)", "image": "", "sound": "" },
+      { "text": "W jakim roku wyszedl Cyberpunk 2077?", "answer": "2020", "image": "", "sound": "" },
+      { "text": "Jaki polski pisarz stworzyl sage o wiedzminie?", "answer": "Andrzej Sapkowski", "image": "", "sound": "" }
+    ]
+  },
+  {
+    "name": "Sonic",
+    "questions": [
+      { "text": "Jakiego koloru jest Sonic?", "answer": "Niebieskiego", "image": "", "sound": "" },
+      { "text": "Jak nazywa sie dwuogonowy lisek, przyjaciel Sonica?", "answer": "Tails", "image": "", "sound": "" },
+      { "text": "Jak nazywa sie glowny wrog Sonica?", "answer": "Dr Eggman (Robotnik)", "image": "", "sound": "" },
+      { "text": "Jaka firma stworzyla Sonica?", "answer": "SEGA", "image": "", "sound": "" }
+    ]
+  },
+  {
+    "name": "GTA",
+    "questions": [
+      { "text": "Jaka firma wydaje serie GTA?", "answer": "Rockstar Games", "image": "", "sound": "" },
+      { "text": "Jak ma na imie glowny bohater GTA San Andreas (skrot CJ)?", "answer": "Carl Johnson", "image": "", "sound": "" },
+      { "text": "W ktorej czesci GTA gramy Niko Bellicem?", "answer": "GTA IV", "image": "", "sound": "" },
+      { "text": "Jak nazywa sie fikcyjny stan, w ktorym dzieje sie GTA V?", "answer": "San Andreas", "image": "", "sound": "" }
+    ]
+  },
+  {
+    "name": "Retro",
+    "questions": [
+      { "text": "Jak nazywa sie zolty bohater, ktory zjada kropki w labiryncie?", "answer": "Pac-Man", "image": "", "sound": "" },
+      { "text": "W jakiej grze uklada sie spadajace klocki (tetrominoes)?", "answer": "Tetris", "image": "", "sound": "" },
+      { "text": "W jakiej grze z 1978 roku bronimy sie przed kosmitami schodzacymi z gory ekranu?", "answer": "Space Invaders", "image": "", "sound": "" },
+      { "text": "W jakim kraju powstal Tetris?", "answer": "W ZSRR (Rosja)", "image": "", "sound": "" }
+    ]
+  },
+  {
+    "name": "Postacie",
+    "questions": [
+      { "text": "Jak nazywa sie archeolozka z serii Tomb Raider?", "answer": "Lara Croft", "image": "", "sound": "" },
+      { "text": "Jak nazywa sie glowny bohater serii God of War?", "answer": "Kratos", "image": "", "sound": "" },
+      { "text": "Jak nazywa sie bohater serii Metal Gear Solid, znany jako Snake?", "answer": "Solid Snake", "image": "", "sound": "" },
+      { "text": "Jak nazywa sie lowczyni nagrod z serii Metroid?", "answer": "Samus Aran", "image": "", "sound": "" }
+    ]
+  }
+]

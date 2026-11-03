@@ -1,11 +1,11 @@
 // STOMP-over-SockJS wrapper. Uses the global `SockJS` and `Stomp` (CDN scripts).
 
 /**
- * Connect, subscribe to the state + timers topics, reconnect after `reconnectMs`
+ * Connect, subscribe to the state, timers and closed topics, reconnect after `reconnectMs`
  * when the connection drops and call `onConnected` after EVERY (re)connect so the
  * caller can re-fetch its snapshot. Returns `{ close() }`.
  */
-export function connectGame(code, { onState, onTimers, onConnected, onStatus, reconnectMs = 3000 } = {}) {
+export function connectGame(code, { onState, onTimers, onClosed, onConnected, onStatus, reconnectMs = 3000 } = {}) {
   let stopped = false;
   let timer = null;
   let client = null;
@@ -32,6 +32,7 @@ export function connectGame(code, { onState, onTimers, onConnected, onStatus, re
       client.connect({}, () => {
         client.subscribe(`/topic/game/${code}/state`, (m) => { if (onState) onState(JSON.parse(m.body)); });
         client.subscribe(`/topic/game/${code}/timers`, (m) => { if (onTimers) onTimers(JSON.parse(m.body)); });
+        client.subscribe(`/topic/game/${code}/closed`, () => { if (onClosed) onClosed(); });
         status('online');
         if (onConnected) onConnected();
       }, scheduleReconnect);

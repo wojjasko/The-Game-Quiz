@@ -1,7 +1,7 @@
 package com.gamequiz.domain.stage2;
 
 import java.util.Arrays;
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -15,23 +15,21 @@ public final class Stage2State {
     public static final int QUESTION_COUNT = 8;
     public static final int IMAGES_PER_QUESTION = 3;
 
-    private final String[][] imageFiles = new String[QUESTION_COUNT][IMAGES_PER_QUESTION];
+    private final Stage2Question[] questions = new Stage2Question[QUESTION_COUNT];
     private final boolean[][] revealed = new boolean[QUESTION_COUNT][IMAGES_PER_QUESTION];
     private final Stage2Outcome[] outcomes = new Stage2Outcome[QUESTION_COUNT];
 
     private int selectedQuestion = 1;
     private Integer focusedImage;
 
-    /**
-     * @param availableImages base name (e.g. {@code p3_2}) to file name (e.g. {@code p3_2.jfif}); the extension
-     *                        is discovered by the media catalog so any image format works
-     */
-    public Stage2State(Map<String, String> availableImages) {
+    /** @param drawn exactly {@link #QUESTION_COUNT} questions drawn from the question bank */
+    public Stage2State(List<Stage2Question> drawn) {
+        if (drawn == null || drawn.size() != QUESTION_COUNT) {
+            throw new IllegalArgumentException("Exactly " + QUESTION_COUNT + " questions are required");
+        }
         Arrays.fill(outcomes, Stage2Outcome.PENDING);
-        for (int question = 1; question <= QUESTION_COUNT; question++) {
-            for (int image = 1; image <= IMAGES_PER_QUESTION; image++) {
-                imageFiles[question - 1][image - 1] = availableImages.get("p" + question + "_" + image);
-            }
+        for (int i = 0; i < QUESTION_COUNT; i++) {
+            questions[i] = Objects.requireNonNull(drawn.get(i), "question");
         }
     }
 
@@ -79,11 +77,30 @@ public final class Stage2State {
         return revealed[number - 1][imageIndex];
     }
 
-    /** File name of an image, or {@code null} when the file does not exist on the server. */
-    public String imageFile(int number, int imageIndex) {
+    public Stage2Question question(int number) {
         checkQuestion(number);
+        return questions[number - 1];
+    }
+
+    public List<Stage2Question> questions() {
+        return List.of(questions);
+    }
+
+    /** Puts another question into a slot and forgets everything that happened to the old one. */
+    public void replaceQuestion(int number, Stage2Question question) {
+        checkQuestion(number);
+        questions[number - 1] = Objects.requireNonNull(question, "question");
+        Arrays.fill(revealed[number - 1], false);
+        outcomes[number - 1] = Stage2Outcome.PENDING;
+        if (selectedQuestion == number) {
+            focusedImage = null;
+        }
+    }
+
+    /** File name of an image of a question (the file may still be missing on disk). */
+    public String imageFile(int number, int imageIndex) {
         checkImage(imageIndex);
-        return imageFiles[number - 1][imageIndex];
+        return question(number).images().get(imageIndex);
     }
 
     private static void checkQuestion(int number) {

@@ -1,11 +1,8 @@
 package com.gamequiz.web;
 
 import com.gamequiz.domain.common.Team;
-import com.gamequiz.domain.stage1.Stage1Question;
 import com.gamequiz.service.GameCommands;
-import com.gamequiz.web.dto.GameDtos.CategoriesRequest;
 import com.gamequiz.web.dto.GameDtos.HostSnapshot;
-import com.gamequiz.web.dto.GameDtos.QuestionRequest;
 import com.gamequiz.web.dto.GameDtos.TextRequest;
 import com.gamequiz.web.dto.GameDtos.TileRequest;
 import com.gamequiz.web.dto.GameDtos.ZoomRequest;
@@ -33,10 +30,11 @@ public class Stage1Controller {
         this.commands = commands;
     }
 
-    @PutMapping("/categories")
-    public HostSnapshot setCategories(@PathVariable String code, @RequestHeader(TOKEN) String token,
-                                      @RequestBody CategoriesRequest request) {
-        return commands.host(code, token, s -> s.stage1().setCategories(request.categories()));
+    /** Draws another category for one column (lobby only). */
+    @PostMapping("/columns/{col}/reroll")
+    public HostSnapshot rerollColumn(@PathVariable String code, @PathVariable int col,
+                                     @RequestHeader(TOKEN) String token) {
+        return commands.host(code, token, s -> s.rerollStage1Column(col));
     }
 
     @PutMapping("/tiles/{row}/{col}")
@@ -50,13 +48,6 @@ public class Stage1Controller {
     public HostSnapshot activateTile(@PathVariable String code, @PathVariable int row, @PathVariable int col,
                                      @RequestHeader(TOKEN) String token) {
         return commands.host(code, token, s -> s.stage1().activateTile(row, col));
-    }
-
-    @PutMapping("/questions/{row}/{col}")
-    public HostSnapshot saveQuestion(@PathVariable String code, @PathVariable int row, @PathVariable int col,
-                                     @RequestHeader(TOKEN) String token, @RequestBody QuestionRequest request) {
-        return commands.host(code, token, s -> s.stage1().setQuestion(row, col,
-                new Stage1Question(request.text(), request.image(), request.sound())));
     }
 
     @PutMapping("/current-question")

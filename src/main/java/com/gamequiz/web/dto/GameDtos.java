@@ -2,9 +2,10 @@ package com.gamequiz.web.dto;
 
 import com.gamequiz.domain.common.GamePhase;
 import com.gamequiz.domain.common.Team;
-import com.gamequiz.domain.stage1.Stage1Question;
+import com.gamequiz.domain.stage1.Stage1Column;
 import com.gamequiz.domain.stage1.TileStatus;
 import com.gamequiz.domain.stage2.Stage2Outcome;
+import com.gamequiz.domain.stage2.Stage2Question;
 import com.gamequiz.domain.stage3.AnswerKey;
 import com.gamequiz.domain.stage3.CardResult;
 
@@ -22,8 +23,11 @@ public final class GameDtos {
 
     // ---- public snapshot (broadcast to everybody) --------------------------------------------------------------
 
-    /** Exactly one of the stage views is non-null: the one that matches {@code phase}. */
-    public record GameSnapshot(String code, GamePhase phase, Map<Team, TeamView> teams,
+    /**
+     * Exactly one of the stage views is non-null: the one that matches {@code phase}.
+     * {@code countdown} is the number of seconds left until the game starts, or {@code null}.
+     */
+    public record GameSnapshot(String code, GamePhase phase, Integer countdown, Map<Team, TeamView> teams,
                                Stage1View stage1, Stage2View stage2, Stage3View stage3) {
     }
 
@@ -65,12 +69,17 @@ public final class GameDtos {
     public record Stage3HostView(int activeCardId, AnswerKey correctAnswer, String correctAnswerText) {
     }
 
-    /** {@code stage1Categories} and {@code stage1Questions} are available in every phase so they can be prepared in the lobby. */
-    public record HostSnapshot(GameSnapshot game, List<PlayerView> players, List<String> stage1Categories,
-                               List<List<Stage1Question>> stage1Questions, Stage3HostView stage3) {
+    /** A stage-3 card as the host sees it: with the question and the correct answer. */
+    public record Stage3HostCard(int id, String category, String question, String correctAnswer, boolean used) {
     }
 
-    public record MediaListing(List<String> stage1Images, List<String> sounds) {
+    /**
+     * Everything the host needs: the drawn question set of every stage (with answers) is available in every
+     * phase so it can be reviewed and re-drawn in the lobby.
+     */
+    public record HostSnapshot(GameSnapshot game, List<PlayerView> players, List<Stage1Column> stage1Columns,
+                               List<Stage2Question> stage2Questions, List<Stage3HostCard> stage3Cards,
+                               Stage3HostView stage3) {
     }
 
     // ---- requests and responses -------------------------------------------------------------------------------
@@ -79,6 +88,10 @@ public final class GameDtos {
     }
 
     public record CreateGameResponse(String code, String hostToken) {
+    }
+
+    /** {@code code} is {@code null} when no game is running. */
+    public record CurrentGameResponse(String code) {
     }
 
     public record JoinRequest(String name, Team team) {
@@ -102,13 +115,7 @@ public final class GameDtos {
     public record TeamRequest(Team team) {
     }
 
-    public record CategoriesRequest(List<String> categories) {
-    }
-
     public record TileRequest(TileStatus status) {
-    }
-
-    public record QuestionRequest(String text, String image, String sound) {
     }
 
     public record TextRequest(String text) {

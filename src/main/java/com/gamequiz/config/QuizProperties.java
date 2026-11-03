@@ -17,7 +17,9 @@ public class QuizProperties {
     /** Directory with {@code images/stage1}, {@code images/stage2} and {@code sounds}. */
     private String mediaDir = "./media";
 
-    private int maxGames = 50;
+    /** Directory with the editable question bank: {@code stage1-categories.json}, {@code stage2-questions.json}, {@code stage3-cards.json}. */
+    private String dataDir = "./data";
+
     private int gameIdleTimeoutMinutes = 360;
     private int maxPlayersPerTeam = 8;
 
@@ -40,12 +42,12 @@ public class QuizProperties {
         this.mediaDir = mediaDir;
     }
 
-    public int getMaxGames() {
-        return maxGames;
+    public String getDataDir() {
+        return dataDir;
     }
 
-    public void setMaxGames(int maxGames) {
-        this.maxGames = maxGames;
+    public void setDataDir(String dataDir) {
+        this.dataDir = dataDir;
     }
 
     public int getGameIdleTimeoutMinutes() {

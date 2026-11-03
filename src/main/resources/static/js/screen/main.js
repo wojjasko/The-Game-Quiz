@@ -8,6 +8,7 @@ import { renderStage1 } from './stage1.js';
 import { renderStage2 } from './stage2.js';
 import { renderStage3 } from './stage3.js';
 import { renderFinal } from './final.js';
+import { playPhaseTransition, updateCountdown } from './transition.js';
 
 const RENDERERS = {
   LOBBY: (root, snap, ctx) => renderLobby(root, snap, ctx),
@@ -17,12 +18,24 @@ const RENDERERS = {
   FINISHED: (root, snap) => renderFinal(root, snap),
 };
 
-/** Render one snapshot: HUD plus the view of snap.phase. */
+/** Render one snapshot: HUD plus the view of snap.phase, the start countdown and the stage-change animation. */
 export function renderScreen(hudRoot, viewRoot, snap, ctx) {
   renderHud(hudRoot, snap, ctx.state);
   viewRoot.dataset.phase = snap.phase;
   const render = RENDERERS[snap.phase];
   if (render) render(viewRoot, snap, ctx);
+
+  updateCountdown(snap.phase === 'LOBBY' ? snap.countdown : null);
+  const previous = ctx.state.prevPhase;
+  if (previous !== undefined && previous !== snap.phase) playPhaseTransition(snap.phase);
+  ctx.state.prevPhase = snap.phase;
+}
+
+function showNotice(hudRoot, viewRoot, text) {
+  hudRoot.hidden = true;
+  updateCountdown(null);
+  replaceContent(viewRoot, h('div', { class: 'notice' },
+      h('p', null, text), h('a', { href: '/', class: 'btn btn-primary' }, 'Wroc na strone glowna')));
 }
 
 export function startScreen() {
@@ -33,8 +46,7 @@ export function startScreen() {
 
   if (!code) {
     hudRoot.hidden = true;
-    replaceContent(viewRoot, h('div', { class: 'notice' },
-      h('p', null, 'Brak kodu gry w adresie.'), h('a', { href: '/', class: 'btn btn-primary' }, 'Wróć na stronę główną')));
+    showNotice(hudRoot, viewRoot, 'Brak kodu gry w adresie.');
     return null;
   }
 
@@ -47,7 +59,7 @@ export function startScreen() {
         const res = await joinGame(code, name, team);
         setPlayerId(code, res.playerId);
         ctx.playerId = res.playerId;
-        toast('Dołączono do gry.', 'ok');
+        toast('Dolaczono do gry.', 'ok');
         if (snapshot) renderScreen(hudRoot, viewRoot, snapshot, ctx);
         refresh();
       } catch (e) { toast(e.message); }
@@ -65,14 +77,20 @@ export function startScreen() {
     },
   };
 
+  /** The room is gone (closed by the host or the server restarted): forget this player and say so. */
+  function closed(text) {
+    clearPlayerId(code);
+    ctx.playerId = null;
+    showNotice(hudRoot, viewRoot, text);
+  }
+
   const show = (snap) => { snapshot = snap; renderScreen(hudRoot, viewRoot, snap, ctx); };
   async function refresh() {
     try { show(await getGame(code)); } catch (e) {
-      toast(e.message);
-      if (e.status === 404 && !snapshot) {
-        hudRoot.hidden = true;
-        replaceContent(viewRoot, h('div', { class: 'notice' },
-          h('p', null, 'Nie znaleziono gry.'), h('a', { href: '/', class: 'btn btn-primary' }, 'Wróć na stronę główną')));
+      if (e.status === 404) {
+        closed(snapshot ? 'Pokoj zostal zamkniety przez prowadzacego.' : 'Nie znaleziono gry.');
+      } else {
+        toast(e.message);
       }
     }
   }
@@ -85,6 +103,7 @@ export function startScreen() {
   return connectGame(code, {
     onState: show,
     onTimers: (t) => updateTimers(hudRoot, t),
+    onClosed: () => closed('Pokoj zostal zamkniety przez prowadzacego.'),
     onConnected: refresh,
   });
 }

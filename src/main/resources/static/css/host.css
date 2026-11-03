@@ -60,3 +60,12 @@ body.host {
     .question-row { grid-template-columns: 1fr; }
     .host-col-wide { min-width: 0; }
 }
+
+/* ---- question set review (lobby) and stage-1 question list ------------------------------------------------------- */
+.set-block { margin-bottom: 14px; padding: 8px 10px; border: 1px solid #393e46; border-radius: 6px; }
+.set-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; color: #66fcf1; }
+.set-line { display: flex; align-items: center; gap: 10px; padding: 4px 0; font-size: 13px; border-bottom: 1px solid #2f343d; }
+.set-line > span:nth-child(2) { flex: 1; }
+.set-line .answer { color: #28a745; }
+.host-start { font-size: 16px; padding: 10px 18px; }
+.host-countdown { font-size: 22px; font-weight: 800; color: #ffc107; }
