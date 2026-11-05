@@ -9,6 +9,7 @@ import { renderStage2 } from './stage2.js';
 import { renderStage3 } from './stage3.js';
 import { renderFinal } from './final.js';
 import { playPhaseTransition, updateCountdown } from './transition.js';
+import { installSoundToggle, syncCountdownSound } from './sound.js';
 
 const RENDERERS = {
   LOBBY: (root, snap, ctx) => renderLobby(root, snap, ctx),
@@ -25,7 +26,9 @@ export function renderScreen(hudRoot, viewRoot, snap, ctx) {
   const render = RENDERERS[snap.phase];
   if (render) render(viewRoot, snap, ctx);
 
-  updateCountdown(snap.phase === 'LOBBY' ? snap.countdown : null);
+  const countdown = snap.phase === 'LOBBY' ? snap.countdown : null;
+  updateCountdown(countdown);
+  syncCountdownSound(countdown ?? null);
   const previous = ctx.state.prevPhase;
   if (previous !== undefined && previous !== snap.phase) playPhaseTransition(snap.phase);
   ctx.state.prevPhase = snap.phase;
@@ -34,6 +37,7 @@ export function renderScreen(hudRoot, viewRoot, snap, ctx) {
 function showNotice(hudRoot, viewRoot, text) {
   hudRoot.hidden = true;
   updateCountdown(null);
+  syncCountdownSound(null);
   replaceContent(viewRoot, h('div', { class: 'notice' },
       h('p', null, text), h('a', { href: '/', class: 'btn btn-primary' }, 'Wroc na strone glowna')));
 }
@@ -95,6 +99,7 @@ export function startScreen() {
     }
   }
 
+  installSoundToggle();
   doc.addEventListener('contextmenu', (e) => {
     if (!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) e.preventDefault();
   });
