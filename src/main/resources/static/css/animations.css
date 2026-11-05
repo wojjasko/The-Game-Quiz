@@ -117,8 +117,21 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .countdown-overlay, .countdown-number, .countdown-ring::after, .stage-transition .panel, .stage-transition .intro,
+    .countdown-overlay, .countdown-number, .countdown-ring::after, .sound-toggle.attention, .stage-transition .panel, .stage-transition .intro,
     .question-box.question-enter, .question-box.question-enter *, .steals-badge.steal-hit, .steal-fx, .team-title .ch, .team-title .ghost {
         animation-duration: 0.01s !important; animation-delay: 0s !important;
     }
+}
+
+/* ---- sound button (bottom left, above the countdown overlay so it can be clicked during the countdown) ----------- */
+.sound-toggle {
+    position: fixed; left: 16px; bottom: 16px; z-index: 9500; padding: 8px 14px; border-radius: 20px;
+    font-family: inherit; font-size: 12px; font-weight: 700; color: #c5a1ff; cursor: pointer;
+    background: rgba(18, 9, 31, 0.85); border: 1px solid rgba(102, 252, 241, 0.4); opacity: 0.75;
+}
+.sound-toggle:hover { opacity: 1; }
+.sound-toggle.attention { opacity: 1; color: #fff; border-color: #ff007f; animation: soundAttention 1s ease-in-out infinite; }
+@keyframes soundAttention {
+    0%, 100% { box-shadow: 0 0 0 rgba(255, 0, 127, 0); }
+    50% { box-shadow: 0 0 18px rgba(255, 0, 127, 0.9); }
 }
